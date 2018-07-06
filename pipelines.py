@@ -146,12 +146,15 @@ class Stage(object):
     def script(self):
         raise NotImplementedError
 
-    @property
     def cmdline(self):
         return ' '.join((self.script, self.args))
 
     def run(self):
-        subprocess.call(self.cmdline, shell=True)
+        if inspect.isgeneratorfunction(self.cmdline):
+            for cmd in self.cmdline():
+                subprocess.call(cmd, shell=True)
+        else:
+            subprocess.call(self.cmdline(), shell=True)
 
 
 class PreFreeSurfer(Stage):
@@ -212,6 +215,10 @@ class FreeSurfer(Stage):
     def __init__(self, config):
         super(__class__, self).__init__(config)
 
+    @property
+    def args(self):
+        return self.spec.format(self.formatter)
+
 
 class PostFreeSurfer(Stage):
 
@@ -235,6 +242,10 @@ class PostFreeSurfer(Stage):
 
     def __init__(self, config):
         super(__class__, self).__init__(config)
+
+    @property
+    def args(self):
+        return self.spec.format(self.formatter)
 
 
 class FMRIVolume(Stage):
@@ -263,6 +274,10 @@ class FMRIVolume(Stage):
     def __init__(self, config):
         super(__class__, self).__init__(config)
 
+    @property
+    def args(self):
+        return self.spec.format(self.formatter)
+
 
 class FMRISurface(Stage):
 
@@ -277,3 +292,7 @@ class FMRISurface(Stage):
 
     def __init__(self, config):
         super(__class__, self).__init__(config)
+
+    @property
+    def args(self):
+        return self.spec.format(self.formatter)
