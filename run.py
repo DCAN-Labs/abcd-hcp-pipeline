@@ -1,128 +1,66 @@
-from itertools import product
+import argparse
+import os
 
-from bids.grabbids import BIDSLayout
-
+from helpers import read_bids_dataset
 from pipelines import (HCPConfiguration, PreFreeSurfer, FreeSurfer,
                        PostFreeSurfer, FMRIVolume, FMRISurface)
 
 
-def read_bids_dataset(bids_input, subject_list=None, collect_on_subject=False):
-    """
-    extracts and organizes relevant metadata from a bids dataset necessary
-    for the dcan-modified hcp fmri processing pipeline.
-    :param bids_input: path to input bids folder
-    :param subject_list: either, a list of subject ids to filter on,
-    OR a dictionary of subject id: list of sessions to filter on.
-    :param collect_on_subject:
-    :return:
-    """
+def _cli():
+    parser = generate_parser()
+    args = parser.parse_args()
 
-    layout = BIDSLayout(bids_input)
-    subjects = layout.get_subjects()
-
-    # filter subject list
-    if isinstance(subject_list, list):
-        subjects = [s for s in subjects if s in subject_list]
-    elif isinstance(subject_list, dict):
-        subjects = [s for s in subjects if s in subject_list.keys()]
-
-    subsess = []
-    # filter session list
-    for s in subjects:
-        sessions = layout.get_sessions(subject=s)
-        if not sessions:
-            subsess += [(s, 'session')]
-        elif collect_on_subject:
-            subsess += [(s, sessions)]
-        else:
-            subsess += list(product([s], sessions))
-
-    for subject, sessions in subsess:
-        # get relevant image modalities
-        anat = set_anatomicals(layout, subject, sessions)
-        func = set_functionals(layout, subject, sessions)
-        fmap = set_fieldmaps(layout, subject, sessions)
-
-        bids_data = {
-            'subject': subject,
-            'types': layout.get(subject=subject, session=sessions,
-                                target='type', return_type='id')
-        }
-        bids_data.update(anat)
-        bids_data.update(func)
-        bids_data.update(fmap)
-
-        yield bids_data
+    return interface(args.bids_input,  args.output)
 
 
-def set_anatomicals(layout, subject, sessions):
-    t1ws = layout.get(subject=subject, session=sessions, modality='anat',
-                      type='T1w', extensions='.nii.gz')
-    t1w_metadata = layout.get_metadata(t1ws[0].filename)
+def generate_parser(parser=None):
+    if not parser:
+        parser = argparse.ArgumentParser(
+            prog='run.py',
+            description="""DCAN HCP BIDS App.  This BIDS application 
+            initiates a functional MRI processing pipeline based on the Human 
+            Connectome Project's minimal processing pipelines.  BIDS 
+            applications are explained in more detail at 
+            http://bids.neuroimaging.io/ .  
+            """)
 
-    t2ws = layout.get(subject=subject, session=sessions, modality='anat',
-                      type='T2w')
-    if len(t2ws):
-        t2w_metadata = layout.get_metadata(t2ws[0].filename)
-    else:
-        t2w_metadata = None
-    spec = {
-        't1w': t1ws,
-        't1w_metadata': t1w_metadata,
-        't2w': t2ws,
-        't2w_metadata': t2w_metadata
-    }
-    return spec
+    parser.add_argument(
+        'bids_input',
+        help='internal path to the input bids dataset.')
+    parser.add_argument(
+        'output',
+        help='internal path to the output directory.')
+    parser.add_argument(
+        '--ncpus', type=int,
+        help='number of cores to use for concurrent processing of functional '
+             'runs.'
+    )
+    # add subject-list and collect-on-subject options to parser.
 
-
-def set_functionals(layout, subject, sessions):
-    func = layout.get(subject=subject, session=sessions, modality='func',
-                      type='bold', extensions='.nii.gz')
-    func_metadata = [layout.get_metadata(x.filename) for x in func]
-    spec = {
-        'func': func,
-        'func_metadata': func_metadata[0]
-    }
-    return spec
+    return parser
 
 
-def set_fieldmaps(layout, subject, sessions):
-    fmap = layout.get(subject=subject, session=sessions, modality='fmap',
-                      extensions='.nii.gz')
-    fmap_metadata = [layout.get_metadata(x.filename) for x in fmap]
+def interface(bids_input, output, subject_list=None, collect=False):
+    assert os.path.isdir(bids_input), bids_input + ' is not a directory!'
+    if not os.path.isdir(output):
+        os.makedirs(output)
+    session_generator = read_bids_dataset(bids_input, subject_list=subject_list,
+                      collect_on_subject=collect)
 
-    # handle case spin echo
-    types = [x.type for x in fmap]
-    indices = [i for i, x in enumerate(types) if x == 'epi']
-    if len(indices):
-        # @TODO read intendedFor field to map field maps to functionals.
-        positive = [i for i, x in enumerate(fmap_metadata) if '-' not in x[
-            'PhaseEncodingDirection']]
-        negative = [i for i, x in enumerate(fmap_metadata) if '-' in x[
-            'PhaseEncodingDirection']]
-        fmap = {'positive': [fmap[i] for i in positive],
-                'negative': [fmap[i] for i in negative]}
-        fmap_metadata = {
-            'positive': [fmap_metadata[i] for i in positive],
-            'negative': [fmap_metadata[i] for i in negative]
-        }
-        # @TODO check that no orthogonal field maps were collected.
+    for session in session_generator:
+        # create pipelines
+        outdir = os.path.join(output, session['subject'], session['session'])
+        session_conf = HCPConfiguration(session, outdir)
+        pre = PreFreeSurfer(session_conf)
+        free = FreeSurfer(session_conf)
+        post = PostFreeSurfer(session_conf)
+        vol = FMRIVolume(session_conf)
+        surf = FMRISurface(session_conf)
 
-    # handle case fieldmap # @TODO
-    elif 'magnitude' in fmap:
-        pass
-
-    spec = {
-        'fmap': fmap,
-        'fmap_metadata': fmap_metadata
-    }
-    return spec
+        for stage in [pre, free, post, vol, surf]:
+            print(stage)
+            # stage.run()
 
 
 if __name__ == '__main__':
-    import os
-    bids_dir = r'C:\Users\sturgeod\PycharmProjects\dcan_hcp_bids/sub' \
-               r'-NDARINV3F6NJ6WW'
-    for spec in read_bids_dataset(bids_dir):
-        conf = HCPConfiguration(spec, os.getcwd())
-        pre = PreFreeSurfer(conf)
+    _cli()

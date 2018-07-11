@@ -2,6 +2,9 @@ import inspect
 import os
 import subprocess
 
+from helpers import (get_fmriname, get_readoutdir, get_relpath,
+                     ijk_to_xyz)
+
 
 class HCPConfiguration(object):
     """
@@ -30,9 +33,13 @@ class HCPConfiguration(object):
     # MNI2mm template
     template2mmmask = "{HCPPIPEDIR_Templates}/MNI152_T1_2mm_brain_mask_dil" \
                       ".nii.gz"
-    # Atlas Myelin Maps for surface registration
-    referencemyelinmaps = "{HCPPIPEDIR_Templates}/standard_mesh_atlases/" \
-                          "Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii"
+    # Myelin Maps
+    refmyelinmaps = "{HCPPIPEDIR_Templates}/standard_mesh_atlases/" \
+                    "Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii"
+    # Surface Atlas Templates
+    surfatlasdir = "{HCPPIPEDIR_Templates}/standard_mesh_atlases"
+    # Grayordinate Templates
+    grayordinatesdir = "{HCPPIPEDIR_Templates}/91282_Greyordinates"
 
     # @ various settings @ #
     # fov size for robust_fov automatic cropping
@@ -40,20 +47,22 @@ class HCPConfiguration(object):
     # final time series isotropic resolution (mm)
     fmrires = 2.0
     # resolution of greyordinates (mm)
-    greyordinatesres = 2.0
+    grayordinateres = 2.0
     # smoothing sigma for final greyordinate data (mm)
     smoothingFWHM = 2.0
     # surface registration algorithm, one of: FS, MSMSulc
     regname = "FS"
     # number of vertices (in thousands) for high and low res surface meshes
-    highresmesh = "164"
+    hiresmesh = "164"
     lowresmesh = "32"
+    # motion correction method
+    mctype = 'MCFLIRT'
 
     # @ configuration files @ #
     topupconfig = "{HCPPIPEDIR_Config}/b02b0.cnf"
     fnirtconfig = "{HCPPIPEDIR_Config}/T1_2_MNI152_2mm.cnf"
     freesurferlabels = "{HCPPIPEDIR_Config}/FreeSurferAllLut.txt"
-    subcorticalgraylabels = "{HCPPIPEDIR_Config}/FreeSurferSubcortical" \
+    subcortgraylabels = "{HCPPIPEDIR_Config}/FreeSurferSubcortical" \
                             "LabelTableLut.txt"
 
     def __init__(self, bids_data, output_directory):
@@ -66,76 +75,95 @@ class HCPConfiguration(object):
         # input bids data struct
         self.bids_data = bids_data
 
-        # environment script to be sourced prior to configuration
-        os.environ['HCPPIPEDIR'] = '/opt/pipeline'
-        self.environment_script = os.path.join('/opt/pipeline', 'setup_env.sh')
+        # @ parameters read from bids @ #
+        self.t1w = self.bids_data['t1w']
+        self.t1samplespacing = \
+            '%.12f' % self.bids_data['t1w_metadata']['DwellTime']
+        self.t1samplespacing = self.t1samplespacing.rstrip('0')
 
-        # @  dynamic parameters read from bids @ #
-        self.t1w = bids_data['t1w']
-        self.t1samplespacing = self.bids_data['t1w_metadata']['DwellTime']
-        if self.bids_data['t2w']:
-            self.t2w = bids_data['t2w']
-            self.t2samplespacing = self.bids_data['t2w_metadata']['DwellTime']
+        if 't2w' in self.bids_data['types']:
+            self.t2w = self.bids_data['t2w']
+            self.t2samplespacing = \
+                '%.12f' % self.bids_data['t2w_metadata']['DwellTime']
+            self.t2samplespacing = self.t2samplespacing.rstrip('0')
+        else:
+            self.t2w = []
+            self.t2samplespacing = None
 
         # distortion correction method: TOPUP, FIELDMAP, or NONE, inferred
         # from files, defaults to spin echo (topup) if both field maps exist
+        self.unwarpdir = get_readoutdir(self.bids_data['t1w_metadata'])
         if 'epi' in self.bids_data['types']:
             self.dcmethod = 'TOPUP'
             # spin echo field map spacing @TODO read during volume per fmap?
             self.echospacing = self.bids_data['fmap_metadata']['positive'][0][
                 'EffectiveEchoSpacing']
+            self.echospacing = ('%.12f' % self.echospacing).rstrip('0')
             # distortion correction phase encoding direction
-            self.unwarpdir = self.bids_data['func_metadata'][
-                'PhaseEncodingDirection']
+            self.seunwarpdir = ijk_to_xyz(
+                self.bids_data['func_metadata']['PhaseEncodingDirection'])
+
+            # set unused fmap args
+            self.fmapmag = self.fmapphase = self.fmapgeneralelectric = \
+                self.echodiff = self.gdcoeffs = None
             # @TODO decide on bfcmethod for fmri data.
-            # self.
 
         elif 'magnitude' in self.bids_data['types']:
             self.dcmethod = 'FIELDMAP'
             # gradient field map delta TE
             self.echodiff = None  # @TODO
-            self.unwarpdir = None
 
         else:
             self.dcmethod = 'NONE'
 
+        if not hasattr(self, 'fmribfcmethod'):
+            self.fmribfcmethod = None
+
         # @ input files @ #
         self.logs = os.path.join(output_directory, 'hcponeclick')
         self.subject = self.bids_data['subject']
-        self.path = output_directory
+        self.path = os.path.join(output_directory, self.subject)
+
+        # print command for HCP
+        self.printcom = ''
 
     def _params(self):
         params = inspect.getmembers(self, lambda a: not inspect.isroutine(a))
-        params = [x for x in params if not x[0].startswith('_')]
+        params = {x[0]: x[1] for x in params if not x[0].startswith('_')}
         return params
 
     def _format(self):
-        # source environment script
-        if self.environment_script:
-            cmd = ['bash', '-c', 'source']
-            cmd += [self.environment_script]
-            subprocess.call(cmd)
-
         params = self._params()
-
         # format all attributes
-        for item, value in params:
+        for item, value in params.items():
             if isinstance(value, str):
-                setattr(self, item, value.format(os.environ))
+                setattr(self, item, value.format(**os.environ))
 
     def get_params(self):
         self._format()
         return self._params()
+
+    def get_bids(self, *args):
+        """
+        get data from bids struct
+        :param args: list of nested dict keys, e.g. one must provide 'fmap',
+        'positive' to retrieve the positive spin echo field maps.
+        :return: bids data
+        """
+        val = self.bids_data
+        for arg in args:
+            val = val[arg]
+        return val
 
 
 class Stage(object):
 
     def __init__(self, config):
         self.config = config
-        self.formatter = config.get_params()
+        self.kwargs = config.get_params()
 
     def __str__(self):
-        string = self.cmdline.split().join(' \\\n    ')
+        string = ' \\\n    '.join(self.cmdline().split())
         return string
 
     @property
@@ -147,7 +175,8 @@ class Stage(object):
         raise NotImplementedError
 
     def cmdline(self):
-        return ' '.join((self.script, self.args))
+        script = self.script.format(**os.environ)
+        return ' '.join((script, self.args))
 
     def run(self):
         if inspect.isgeneratorfunction(self.cmdline):
@@ -188,17 +217,45 @@ class PreFreeSurfer(Stage):
            ' --unwarpdir={unwarpdir}' \
            ' --gdcoeffs={gdcoeffs}' \
            ' --avgrdcmethod={dcmethod}' \
-           ' --topupconfig={topupconfig}'
+           ' --topupconfig={topupconfig}' \
+           ' --printcom={printcom}'
 
     def __init__(self, config):
         super(__class__, self).__init__(config)
         # modify t1/t2 inputs for spec
-        self.formatter['t1w'] = '@'.join(self.formatter.get('t1w'))
-        self.formatter['t2w'] = '@'.join(self.formatter.get('t2w', []))
+        self.kwargs['t1'] = '@'.join(self.kwargs.get('t1w'))
+        self.kwargs['t2'] = '@'.join(self.kwargs.get('t2w', []))
+        if self.kwargs['dcmethod'] == 'TOPUP':
+            self.kwargs['sephasepos'], self.kwargs['sephaseneg'] = \
+                self._get_intended_sefmaps()
+
+    def _get_intended_sefmaps(self):
+        """
+        search for intendedFor field from sidecar json, else give the first
+        spin echo pair.  @TODO Unfortunately, it will cause problems if someone
+        includes the substring "T1w" in a spin echo sidecar name.
+        :return: pair of spin echos, parallel
+        """
+        if '-' in self.kwargs['seunwarpdir']:
+            parallel = 'negative'
+        else:
+            parallel = 'positive'
+
+        for idx, sefm in enumerate(self.config.get_bids('fmap_metadata',
+                                                     parallel)):
+            intended_targets = sefm.get('intendedFor', [])
+            if 'T1w' in ' '.join(intended_targets):
+                intended_idx = idx
+                break
+        else:
+            intended_idx = 0
+
+        return self.config.get_bids('fmap', 'positive', intended_idx), \
+            self.config.get_bids('fmap', 'negative', intended_idx)
 
     @property
     def args(self):
-        return self.spec.format(self.formatter)
+        return self.spec.format(**self.kwargs)
 
 
 class FreeSurfer(Stage):
@@ -214,10 +271,18 @@ class FreeSurfer(Stage):
 
     def __init__(self, config):
         super(__class__, self).__init__(config)
+        self.kwargs['freesurferdir'] = os.path.join(
+            self.kwargs['path'], 'T1w', 'subject')
+        self.kwargs['t1_restore'] = os.path.join(
+            self.kwargs['path'], 'T1w', 'T1w_acpc_dc_restore.nii.gz')
+        self.kwargs['t1_restore_brain'] = os.path.join(
+            self.kwargs['path'], 'T1w', 'T1w_acpc_dc_restore_brain.nii.gz')
+        self.kwargs['t2_restore'] = os.path.join(
+            self.kwargs['path'], 'T2w', 'T2w_acpc_dc_restore.nii.gz')
 
     @property
     def args(self):
-        return self.spec.format(self.formatter)
+        return self.spec.format(**self.kwargs)
 
 
 class PostFreeSurfer(Stage):
@@ -235,8 +300,8 @@ class PostFreeSurfer(Stage):
            ' --freesurferlabels={freesurferlabels}' \
            ' --refmyelinmaps={refmyelinmaps}' \
            ' --regname={regname}' \
-           ' --reference2mm={reference2mm}' \
-           ' --reference2mmmask={reference2mmmask}' \
+           ' --reference2mm={t1template2mm}' \
+           ' --reference2mmmask={template2mmmask}' \
            ' --config={fnirtconfig}' \
            ' --printcom={printcom}'
 
@@ -245,10 +310,12 @@ class PostFreeSurfer(Stage):
 
     @property
     def args(self):
-        return self.spec.format(self.formatter)
+        return self.spec.format(**self.kwargs)
 
 
 class FMRIVolume(Stage):
+
+    script = '{HCPPIPEDIR}/fMRIVolume/GenericfMRIVolumeProcessingPipeline.sh'
 
     spec = ' --path={path}' \
            ' --subject={subject}' \
@@ -262,7 +329,7 @@ class FMRIVolume(Stage):
            ' --fmapgeneralelectric={fmapgeneralelectric}' \
            ' --echospacing={echospacing}' \
            ' --echodiff={echodiff}' \
-           ' --unwarpdir={unwarpdir}' \
+           ' --unwarpdir={seunwarpdir}' \
            ' --fmrires={fmrires}' \
            ' --dcmethod={dcmethod}' \
            ' --gdcoeffs={gdcoeffs}' \
@@ -274,12 +341,56 @@ class FMRIVolume(Stage):
     def __init__(self, config):
         super(__class__, self).__init__(config)
 
+    def __str__(self):
+        string = ''
+        for cmd in self.cmdline():
+            string += ' \\\n    '.join(cmd.split()) +'\n'
+        return string
+
+    def _get_intended_sefmaps(self):
+        """
+        search for intendedFor field from sidecar json to determine
+        appropriate field map pair, else give the first spin echo pair.
+        :return: pair of spin echo filenames, positive then negative
+        """
+        if '-' in self.kwargs['seunwarpdir']:
+            parallel = 'negative'
+        else:
+            parallel = 'positive'
+
+        for idx, sefm in enumerate(self.config.get_bids('fmap_metadata',
+                                                     parallel)):
+            intended_targets = sefm.get('intendedFor', [])
+            if get_relpath(self.kwargs['fmritcs']) in ' '.join(
+                    intended_targets):
+                intended_idx = idx
+                break
+        else:
+            intended_idx = 0
+
+        return self.config.get_bids('fmap', 'positive', intended_idx), \
+            self.config.get_bids('fmap', 'negative', intended_idx)
+
     @property
     def args(self):
-        return self.spec.format(self.formatter)
+        for fmri in self.config.get_bids('func'):
+            self.kwargs['fmritcs'] = fmri
+            self.kwargs['fmriname'] = get_fmriname(fmri)
+            self.kwargs['fmriscout'] = None  # not implemented
+            if self.kwargs['dcmethod'] == 'TOPUP':
+                self.kwargs['sephasepos'], self.kwargs['sephaseneg'] = \
+                    self._get_intended_sefmaps()
+            yield self.spec.format(**self.kwargs)
+
+    def cmdline(self):
+        script = self.script.format(**os.environ)
+        for argset in self.args:
+            yield ' '.join((script, argset))
 
 
 class FMRISurface(Stage):
+
+    script = '{HCPPIPEDIR}/fMRISurface/GenericfMRISurfaceProcessingPipeline.sh'
 
     spec = ' --path={path}' \
            ' --subject={subject}' \
@@ -293,6 +404,19 @@ class FMRISurface(Stage):
     def __init__(self, config):
         super(__class__, self).__init__(config)
 
+    def __str__(self):
+        string = ''
+        for cmd in self.cmdline():
+            string += ' \\\n    '.join(cmd.split()) + '\n'
+        return string
+
     @property
     def args(self):
-        return self.spec.format(self.formatter)
+        for fmri in self.config.get_bids('func'):
+            self.kwargs['fmriname'] = get_fmriname(fmri)
+            yield self.spec.format(**self.kwargs)
+
+    def cmdline(self):
+        script = self.script.format(**os.environ)
+        for argset in self.args:
+            yield ' '.join((script, argset))
