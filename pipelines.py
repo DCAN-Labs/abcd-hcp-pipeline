@@ -2,8 +2,7 @@ import inspect
 import os
 import subprocess
 
-from helpers import (get_fmriname, get_readoutdir, get_relpath,
-                     ijk_to_xyz)
+from helpers import (get_fmriname, get_readoutdir, get_relpath, ijk_to_xyz)
 
 
 class HCPConfiguration(object):
@@ -120,7 +119,7 @@ class HCPConfiguration(object):
             self.fmribfcmethod = None
 
         # @ input files @ #
-        self.logs = os.path.join(output_directory, 'hcponeclick')
+        self.logs = os.path.join(output_directory, 'processing_logs')
         self.subject = self.bids_data['subject']
         self.path = os.path.join(output_directory, self.subject)
 
@@ -140,6 +139,9 @@ class HCPConfiguration(object):
                 setattr(self, item, value.format(**os.environ))
 
     def get_params(self):
+        """
+        :return: dictionary of config properties, formatted using os.environ.
+        """
         self._format()
         return self._params()
 
@@ -157,6 +159,27 @@ class HCPConfiguration(object):
 
 
 class Stage(object):
+    """
+    Base abstract class for pipeline stages.
+
+    attributes:
+    config: HCPConfiguration object.
+    kwargs: dict of attributes returned from HCPConfiguration object.
+
+    abstract methods which need overriding:
+    script: script / tool / executable to run as a subprocess.
+    args:  should provide command line arguments to the script.  Usually
+    utilizes a "spec" attribute which is then formatted with the "kwargs"
+    attribute.  See PreFreeSurfer.
+
+
+    optional:
+    cmdline:  will need overriding to utilize concurrency.  See FMRIVolume.
+    setup: executes prior to executable.
+    teardown: executes after executable completes.
+
+    run: not intended for override.
+    """
 
     def __init__(self, config):
         self.config = config
@@ -165,6 +188,15 @@ class Stage(object):
     def __str__(self):
         string = ' \\\n    '.join(self.cmdline().split())
         return string
+
+    def _get_log_dir(self):
+        return os.path.join(self.kwargs['logs'], self.__class__.__name__)
+
+    def setup(self):
+        return
+
+    def teardown(self):
+        return
 
     @property
     def args(self):
@@ -179,11 +211,25 @@ class Stage(object):
         return ' '.join((script, self.args))
 
     def run(self):
+        self._setup()
         if inspect.isgeneratorfunction(self.cmdline):
             for cmd in self.cmdline():
-                subprocess.call(cmd, shell=True)
+                log_dir = self._get_log_dir()
+                out_log = os.path.join(log_dir,
+                                       self.kwargs['fmriname'] + '.out')
+                err_log = os.path.join(log_dir,
+                                       self.kwargs['fmriname'] + '.err')
+                with open(out_log, 'w') as out, open(err_log, 'w') as err:
+                    subprocess.call(cmd, shell=True, stdout=out, stderr=err)
         else:
-            subprocess.call(self.cmdline(), shell=True)
+            cmd = self.cmdline()
+            log_dir = self._get_log_dir()
+            out_log = os.path.join(log_dir, self.__class__.__name__ + '.out')
+            err_log = os.path.join(log_dir, self.__class__.__name__ + '.err')
+
+            with open(out_log, 'w') as out, open(err_log, 'w') as err:
+                subprocess.call(cmd, shell=True, stdout=out, stderr=err)
+        self._teardown()
 
 
 class PreFreeSurfer(Stage):
@@ -420,3 +466,28 @@ class FMRISurface(Stage):
         script = self.script.format(**os.environ)
         for argset in self.args:
             yield ' '.join((script, argset))
+
+
+class DCANSignalPreprocessing(Stage):
+
+    script = '{DCANSIGPREPDIR}/FNL_preproc_wrapper.sh'
+
+    spec = ' --subject={subject}' \
+           ' --output-folder={path}' \
+           ' --version=FNL_preproc_v2'
+
+    @property
+    def args(self):
+        return self.spec.format(**self.kwargs)
+
+
+class ExecutiveSummary(Stage):
+
+    script = '{EXECSUMDIR}/summary_tools/layout_builder.py'
+
+    spec = ' --subject_path={path}' \
+           ' --output_path={path}/executive_summary'
+
+    @property
+    def args(self):
+        return self.spec.format(**self.kwargs)
