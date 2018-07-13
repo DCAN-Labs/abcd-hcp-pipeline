@@ -190,7 +190,10 @@ class Stage(object):
         return string
 
     def _get_log_dir(self):
-        return os.path.join(self.kwargs['logs'], self.__class__.__name__)
+        log_dir = os.path.join(self.kwargs['logs'], self.__class__.__name__)
+        if not os.path.isdir(log_dir):
+            os.makedirs(log_dir)
+        return log_dir
 
     def setup(self):
         return
