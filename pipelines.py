@@ -81,11 +81,13 @@ class HCPConfiguration(object):
         self.t1samplespacing = self.t1samplespacing.rstrip('0')
 
         if 't2w' in self.bids_data['types']:
+            self.useT2 = 'true'
             self.t2w = self.bids_data['t2w']
             self.t2samplespacing = \
                 '%.12f' % self.bids_data['t2w_metadata']['DwellTime']
             self.t2samplespacing = self.t2samplespacing.rstrip('0')
         else:
+            self.useT2 = 'false'
             self.t2w = []
             self.t2samplespacing = None
 
@@ -267,6 +269,7 @@ class PreFreeSurfer(Stage):
            ' --gdcoeffs={gdcoeffs}' \
            ' --avgrdcmethod={dcmethod}' \
            ' --topupconfig={topupconfig}' \
+           ' --useT2={useT2}' \
            ' --printcom={printcom}'
 
     def __init__(self, config):
@@ -316,6 +319,7 @@ class FreeSurfer(Stage):
            ' --t1={t1_restore}' \
            ' --t1brain={t1_restore_brain}' \
            ' --t2={t2_restore}' \
+           ' --useT2={useT2}' \
            ' --printcom={printcom}'
 
     def __init__(self, config):
@@ -352,6 +356,15 @@ class PostFreeSurfer(Stage):
            ' --reference2mm={t1template2mm}' \
            ' --reference2mmmask={template2mmmask}' \
            ' --config={fnirtconfig}' \
+           ' --useT2={useT2}' \
+           ' --t1template={t1template}' \
+           ' --t1templatebrain={t1templatebrain}' \
+           ' --t1template2mm={t1template2mm}' \
+           ' --t2template={t2template}' \
+           ' --t2templatebrain={t2templatebrain}' \
+           ' --t2template2mm={t2template2mm}' \
+           ' --templatemask={templatemask}' \
+           ' --template2mmmask={template2mmmask}' \
            ' --printcom={printcom}'
 
     def __init__(self, config):
