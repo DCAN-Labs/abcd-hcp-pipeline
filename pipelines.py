@@ -211,7 +211,7 @@ class Stage(object):
         return ' '.join((script, self.args))
 
     def run(self):
-        self._setup()
+        self.setup()
         if inspect.isgeneratorfunction(self.cmdline):
             for cmd in self.cmdline():
                 log_dir = self._get_log_dir()
@@ -229,7 +229,7 @@ class Stage(object):
 
             with open(out_log, 'w') as out, open(err_log, 'w') as err:
                 subprocess.call(cmd, shell=True, stdout=out, stderr=err)
-        self._teardown()
+        self.teardown()
 
 
 class PreFreeSurfer(Stage):
