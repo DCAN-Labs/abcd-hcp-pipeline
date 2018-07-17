@@ -17,7 +17,8 @@ def _cli():
     parser = generate_parser()
     args = parser.parse_args()
 
-    return interface(args.bids_input,  args.output)
+    return interface(args.bids_input,  args.output, args.subject_list,
+                     args.collect, args.ncpus)
 
 
 def generate_parser(parser=None):
@@ -30,30 +31,43 @@ def generate_parser(parser=None):
         parser = argparse.ArgumentParser(
             prog='run.py',
             description="""DCAN HCP BIDS App.  This BIDS application 
-            initiates a functional MRI processing pipeline based on the Human 
-            Connectome Project's minimal processing pipelines with 
+            initiates a DCAN lab functional MRI processing pipeline based on 
+            the Human Connectome Project's minimal processing pipelines with 
             little-to-no configuration required by the user.  BIDS format and 
             applications are explained in more detail at 
             http://bids.neuroimaging.io/
-            """)
-
+            """
+        )
     parser.add_argument(
         'bids_input',
-        help='internal path to the input bids dataset.')
+        help='path to the input bids dataset root directory.  Read more '
+             'about bids format in the link above.  It is recommended to use '
+             'dcm2bids to convert from participant dicoms.'
+    )
     parser.add_argument(
         'output',
-        help='internal path to the output directory.')
+        help='path to the output directory for all intermediate and output '
+             'files from the pipeline.'
+    )
     parser.add_argument(
-        '--ncpus', type=int,
+        '--participant-label', dest='subject_list',
+        help='optional list of participant ids to run. Default is all ids '
+             'found under the bids input directory.'
+    )
+    parser.add_argument(
+        '--all-sessions', dest='collect',
+        help='collapses all sessions into one when running a subject.'
+    )
+    parser.add_argument(
+        '--ncpus', type=int, default=1,
         help='number of cores to use for concurrent processing of functional '
              'runs.'
     )
-    # add subject-list and collect-on-subject options to parser.
 
     return parser
 
 
-def interface(bids_input, output, subject_list=None, collect=False):
+def interface(bids_input, output, subject_list=None, collect=False, ncpus=1):
     """
     main program interface
     :param bids_input: input bids dataset see "helpers.read_bids_dataset" for
@@ -88,7 +102,7 @@ def interface(bids_input, output, subject_list=None, collect=False):
         for stage in order:
             print('running ' + stage.__class__.__name__)
             print(stage)
-            stage.run()
+            stage.run(ncpus)
 
 
 if __name__ == '__main__':

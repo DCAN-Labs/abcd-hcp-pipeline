@@ -2,6 +2,8 @@ import inspect
 import os
 import subprocess
 
+import multiprocessing as mp
+
 from helpers import (get_fmriname, get_readoutdir, get_relpath, ijk_to_xyz)
 
 
@@ -120,10 +122,10 @@ class HCPConfiguration(object):
         if not hasattr(self, 'fmribfcmethod'):
             self.fmribfcmethod = None
 
-        # @ input files @ #
+        # @ output files @ #
+        self.path = os.path.join(output_directory, 'files')
         self.logs = os.path.join(output_directory, 'processing_logs')
         self.subject = self.bids_data['subject']
-        self.path = os.path.join(output_directory, self.subject)
 
         # print command for HCP
         self.printcom = ''
@@ -215,25 +217,25 @@ class Stage(object):
         script = self.script.format(**os.environ)
         return ' '.join((script, self.args))
 
-    def run(self):
+    def run(self, ncpus=1):
         self.setup()
         if inspect.isgeneratorfunction(self.cmdline):
+            cmdlist = []
             for cmd in self.cmdline():
                 log_dir = self._get_log_dir()
                 out_log = os.path.join(log_dir,
                                        self.kwargs['fmriname'] + '.out')
                 err_log = os.path.join(log_dir,
                                        self.kwargs['fmriname'] + '.err')
-                with open(out_log, 'w') as out, open(err_log, 'w') as err:
-                    subprocess.call(cmd, shell=True, stdout=out, stderr=err)
+                cmdlist.append((cmd, out_log, err_log))
+            with mp.Pool(processes=ncpus) as pool:
+                pool.starmap(_call, cmdlist)
         else:
             cmd = self.cmdline()
             log_dir = self._get_log_dir()
             out_log = os.path.join(log_dir, self.__class__.__name__ + '.out')
             err_log = os.path.join(log_dir, self.__class__.__name__ + '.err')
-
-            with open(out_log, 'w') as out, open(err_log, 'w') as err:
-                subprocess.call(cmd, shell=True, stdout=out, stderr=err)
+            _call(cmd, out_log, err_log, num_threads=ncpus)
         self.teardown()
 
 
@@ -307,7 +309,10 @@ class PreFreeSurfer(Stage):
 
     @property
     def args(self):
-        return self.spec.format(**self.kwargs)
+        # None to NONE
+        kw = {k: (v if v is not None else "NONE")
+              for k, v in self.kwargs.items()}
+        return self.spec.format(**kw)
 
 
 class FreeSurfer(Stage):
@@ -406,7 +411,7 @@ class FMRIVolume(Stage):
     def __str__(self):
         string = ''
         for cmd in self.cmdline():
-            string += ' \\\n    '.join(cmd.split()) +'\n'
+            string += ' \\\n    '.join(cmd.split()) + '\n'
         return string
 
     def _get_intended_sefmaps(self):
@@ -436,13 +441,17 @@ class FMRIVolume(Stage):
     @property
     def args(self):
         for fmri in self.config.get_bids('func'):
+            # set ts parameters
             self.kwargs['fmritcs'] = fmri
             self.kwargs['fmriname'] = get_fmriname(fmri)
             self.kwargs['fmriscout'] = None  # not implemented
             if self.kwargs['dcmethod'] == 'TOPUP':
                 self.kwargs['sephasepos'], self.kwargs['sephaseneg'] = \
                     self._get_intended_sefmaps()
-            yield self.spec.format(**self.kwargs)
+            # None to NONE
+            kw = {k: (v if v is not None else "NONE")
+                  for k, v in self.kwargs.items()}
+            yield self.spec.format(**kw)
 
     def cmdline(self):
         script = self.script.format(**os.environ)
@@ -507,3 +516,12 @@ class ExecutiveSummary(Stage):
     @property
     def args(self):
         return self.spec.format(**self.kwargs)
+
+
+def _call(cmd, out_log, err_log, num_threads=1):
+    env = os.environ.copy()
+    if num_threads > 1:
+        env['OMP_NUM_THREADS'] = str(num_threads)
+        env['ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS'] = str(num_threads)
+    with open(out_log, 'w') as out, open(err_log, 'w') as err:
+        subprocess.run(cmd, shell=True, stdout=out, stderr=err, env=env)
