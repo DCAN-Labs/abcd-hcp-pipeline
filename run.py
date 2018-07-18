@@ -30,10 +30,12 @@ def generate_parser(parser=None):
     if not parser:
         parser = argparse.ArgumentParser(
             prog='run.py',
-            description="""DCAN HCP BIDS App.  This BIDS application 
-            initiates a DCAN lab functional MRI processing pipeline based on 
-            the Human Connectome Project's minimal processing pipelines with 
-            little-to-no configuration required by the user.  BIDS format and 
+            description="""The Developmental Cognition and Neuroimaging (DCAN) 
+            lab fMRI Pipeline.  This BIDS application initiates a functional 
+            MRI processing pipeline built upon the Human Connectome Project's 
+            own minimal processing pipelines.  The application requires only a 
+            dataset conformed to the BIDS specification, and little-to-no 
+            additional configuration on the part of the user. BIDS format and 
             applications are explained in more detail at 
             http://bids.neuroimaging.io/
             """
@@ -50,12 +52,12 @@ def generate_parser(parser=None):
              'files from the pipeline.'
     )
     parser.add_argument(
-        '--participant-label', dest='subject_list',
+        '--participant-label', dest='subject_list', metavar='ID', nargs='+',
         help='optional list of participant ids to run. Default is all ids '
              'found under the bids input directory.'
     )
     parser.add_argument(
-        '--all-sessions', dest='collect',
+        '--all-sessions', dest='collect', action='store_true',
         help='collapses all sessions into one when running a subject.'
     )
     parser.add_argument(
@@ -86,7 +88,8 @@ def interface(bids_input, output, subject_list=None, collect=False, ncpus=1):
 
     for session in session_generator:
         # setup session configuration
-        outdir = os.path.join(output, session['subject'], session['session'])
+        outdir = os.path.join(output, 'sub-%s' % session['subject'],
+                              'ses-%s' % session['session'])
         session_conf = HCPConfiguration(session, outdir)
         # create pipelines
         pre = PreFreeSurfer(session_conf)
@@ -98,7 +101,7 @@ def interface(bids_input, output, subject_list=None, collect=False, ncpus=1):
         execsum = ExecutiveSummary(session_conf)
 
         order = [pre, free, post, vol, surf, fnlpp, execsum]
-
+        # run pipelines
         for stage in order:
             print('running ' + stage.__class__.__name__)
             print(stage)

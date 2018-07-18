@@ -1,8 +1,9 @@
 import inspect
-import os
+import json
+import multiprocessing as mp
 import subprocess
 
-import multiprocessing as mp
+import os
 
 from helpers import (get_fmriname, get_readoutdir, get_relpath, ijk_to_xyz)
 
@@ -82,7 +83,7 @@ class HCPConfiguration(object):
             '%.12f' % self.bids_data['t1w_metadata']['DwellTime']
         self.t1samplespacing = self.t1samplespacing.rstrip('0')
 
-        if 't2w' in self.bids_data['types']:
+        if 'T2w' in self.bids_data['types']:
             self.useT2 = 'true'
             self.t2w = self.bids_data['t2w']
             self.t2samplespacing = \
@@ -162,6 +163,81 @@ class HCPConfiguration(object):
         return val
 
 
+class Status(object):
+    """Status provides and updates node status information.
+
+    Status information for each node is stored in the
+    processing_logs/NodeName/status.json file.  This class provides an
+    abstraction layer between the NodeStep class and this status file.
+
+    This is a write through data structure
+    """
+    name = 'status.json'
+    states = {
+        'unchecked': 999,
+        'not_started': 4,
+        'failed': 3,
+        'incomplete': 2,
+        'succeeded': 1,
+    }
+
+    def __init__(self, folder_path):
+        """
+        Args:
+            folder_path (str): absolute path to the Stage's bookkeeping
+            (e.g. /output/sub/ses/processing_logs/PipelineStage)
+        """
+        self.file_path = os.path.join(folder_path, Status.name)
+
+        defaults = {
+            'num_runs': 0,
+            'node_status': Status.states['not_started'],
+            'comment': '',
+            }
+
+        if not os.path.exists(self.file_path):
+            self._write_dict(**defaults)
+
+    def __getitem__(self, key):
+        with open(self.file_path, 'r') as fd:
+            return json.load(fd)[key]
+
+    def __setitem__(self, key, value):
+        with open(self.file_path, 'r') as fd:
+            store = json.load(fd)
+        store[key] = value
+        self._write_dict(**store)
+        return value
+
+    def _write_dict(self, **contents):
+        with open(self.file_path, 'w') as fd:
+            json.dump(contents, fd, indent=4)
+
+    def increment_run(self):
+        self['num_runs'] += 1
+
+    def update_start_run(self):
+        self.increment_run()
+        self['node_status'] = Status.states['incomplete']
+
+    def update_success(self):
+        self['node_status'] = Status.states['succeeded']
+        self['comment'] = ''
+
+    def update_failure(self, comment=''):
+        self['node_status'] = Status.states['failed']
+        self['comment'] = comment
+
+    def update_unchecked(self, comment='no expected_outputs list for '
+                                       'completed node'):
+        self['node_status'] = Status.states['unchecked']
+        self['comment'] = comment
+
+    def succeeded(self):
+        return self['node_status'] in (Status.states['succeeded'],
+                                       Status.states['unchecked'])
+
+
 class Stage(object):
     """
     Base abstract class for pipeline stages.
@@ -176,11 +252,10 @@ class Stage(object):
     utilizes a "spec" attribute which is then formatted with the "kwargs"
     attribute.  See PreFreeSurfer.
 
-
     optional:
     cmdline:  will need overriding to utilize concurrency.  See FMRIVolume.
-    setup: executes prior to executable.
-    teardown: executes after executable completes.
+    setup: executes prior to executable.  Recommended to wrap super().
+    teardown: executes after executable completes.  Recommended to wrap super().
 
     run: not intended for override.
     """
@@ -188,6 +263,7 @@ class Stage(object):
     def __init__(self, config):
         self.config = config
         self.kwargs = config.get_params()
+        self.status = Status(self._get_log_dir())
 
     def __str__(self):
         string = ' \\\n    '.join(self.cmdline().split())
@@ -200,10 +276,15 @@ class Stage(object):
         return log_dir
 
     def setup(self):
+        self.status.update_start_run()
         return
 
-    def teardown(self):
+    def teardown(self, result=0):
+        # @TODO update status in case of nonzero exit status
+        # @TODO update status in case of missing expected outputs
+        # finally, terminate pipeline in case of failure.
         return
+
 
     @property
     def args(self):
@@ -219,6 +300,7 @@ class Stage(object):
 
     def run(self, ncpus=1):
         self.setup()
+        # a generator cmdline supports parallel execution
         if inspect.isgeneratorfunction(self.cmdline):
             cmdlist = []
             for cmd in self.cmdline():
@@ -229,14 +311,14 @@ class Stage(object):
                                        self.kwargs['fmriname'] + '.err')
                 cmdlist.append((cmd, out_log, err_log))
             with mp.Pool(processes=ncpus) as pool:
-                pool.starmap(_call, cmdlist)
+                result = pool.starmap(_call, cmdlist)
         else:
             cmd = self.cmdline()
             log_dir = self._get_log_dir()
             out_log = os.path.join(log_dir, self.__class__.__name__ + '.out')
             err_log = os.path.join(log_dir, self.__class__.__name__ + '.err')
-            _call(cmd, out_log, err_log, num_threads=ncpus)
-        self.teardown()
+            result = _call(cmd, out_log, err_log, num_threads=ncpus)
+        self.teardown(result)
 
 
 class PreFreeSurfer(Stage):
@@ -521,7 +603,10 @@ class ExecutiveSummary(Stage):
 def _call(cmd, out_log, err_log, num_threads=1):
     env = os.environ.copy()
     if num_threads > 1:
+        # set parallel environment variables
         env['OMP_NUM_THREADS'] = str(num_threads)
         env['ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS'] = str(num_threads)
     with open(out_log, 'w') as out, open(err_log, 'w') as err:
-        subprocess.run(cmd, shell=True, stdout=out, stderr=err, env=env)
+        result = subprocess.run(cmd, shell=True, stdout=out, stderr=err,
+                                env=env)
+    return result.returncode
