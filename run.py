@@ -18,7 +18,7 @@ def _cli():
     args = parser.parse_args()
 
     return interface(args.bids_input,  args.output, args.subject_list,
-                     args.collect, args.ncpus)
+                     args.collect, args.ncpus, args.stage)
 
 
 def generate_parser(parser=None):
@@ -65,11 +65,17 @@ def generate_parser(parser=None):
         help='number of cores to use for concurrent processing of functional '
              'runs.'
     )
+    parser.add_argument(
+        '--stage',
+        help='begin from a given stage.  Options: PreFreeSurfer, FreeSurfer, '
+             'PostFreeSurfer, FMRIVolume, FMRISurface, '
+             'DCANSignalPreprocessing, ExecutiveSummary')
 
     return parser
 
 
-def interface(bids_input, output, subject_list=None, collect=False, ncpus=1):
+def interface(bids_input, output, subject_list=None, collect=False, ncpus=1,
+              start_stage=None):
     """
     main program interface
     :param bids_input: input bids dataset see "helpers.read_bids_dataset" for
@@ -101,6 +107,11 @@ def interface(bids_input, output, subject_list=None, collect=False, ncpus=1):
         execsum = ExecutiveSummary(session_conf)
 
         order = [pre, free, post, vol, surf, fnlpp, execsum]
+        if start_stage:
+            names = [x.__class__.__name__ for x in order]
+            assert start_stage in names
+            order = order[names.index(start_stage):]
+
         # run pipelines
         for stage in order:
             print('running ' + stage.__class__.__name__)
