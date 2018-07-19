@@ -412,7 +412,7 @@ class FreeSurfer(Stage):
     def __init__(self, config):
         super(__class__, self).__init__(config)
         self.kwargs['freesurferdir'] = os.path.join(
-            self.kwargs['path'], 'T1w', 'subject')
+            self.kwargs['path'], 'T1w')
         self.kwargs['t1_restore'] = os.path.join(
             self.kwargs['path'], 'T1w', 'T1w_acpc_dc_restore.nii.gz')
         self.kwargs['t1_restore_brain'] = os.path.join(
