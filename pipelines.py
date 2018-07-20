@@ -414,11 +414,11 @@ class FreeSurfer(Stage):
         self.kwargs['freesurferdir'] = os.path.join(
             self.kwargs['path'], 'T1w')
         self.kwargs['t1_restore'] = os.path.join(
-            self.kwargs['path'], 'T1w', 'T1w_acpc_dc_restore.nii.gz')
+            self.kwargs['freesurferdir'], 'T1w_acpc_dc_restore.nii.gz')
         self.kwargs['t1_restore_brain'] = os.path.join(
-            self.kwargs['path'], 'T1w', 'T1w_acpc_dc_restore_brain.nii.gz')
+            self.kwargs['freesurferdir'], 'T1w_acpc_dc_restore_brain.nii.gz')
         self.kwargs['t2_restore'] = os.path.join(
-            self.kwargs['path'], 'T2w', 'T2w_acpc_dc_restore.nii.gz')
+            self.kwargs['freesurferdir'], 'T2w_acpc_dc_restore.nii.gz')
 
     @property
     def args(self):
