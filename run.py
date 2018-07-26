@@ -44,7 +44,8 @@ def generate_parser(parser=None):
         'bids_input',
         help='path to the input bids dataset root directory.  Read more '
              'about bids format in the link above.  It is recommended to use '
-             'dcm2bids to convert from participant dicoms.'
+             'the dcan bids gui or dcm2bids to convert from participant '
+             'dicoms.'
     )
     parser.add_argument(
         'output',
@@ -62,14 +63,14 @@ def generate_parser(parser=None):
     )
     parser.add_argument(
         '--ncpus', type=int, default=1,
-        help='number of cores to use for concurrent processing of functional '
-             'runs.'
+        help='number of cores to use for concurrent processing and '
+             'algorithmic speedups.  Surface results are non-deterministic for '
     )
     parser.add_argument(
         '--stage',
-        help='begin from a given stage.  Options: PreFreeSurfer, FreeSurfer, '
-             'PostFreeSurfer, FMRIVolume, FMRISurface, '
-             'DCANSignalPreprocessing, ExecutiveSummary')
+        help='begin from a given stage, continuing through.  Options: '
+             'PreFreeSurfer, FreeSurfer, PostFreeSurfer, FMRIVolume, '
+             'FMRISurface, DCANSignalPreprocessing, ExecutiveSummary')
 
     return parser
 
@@ -84,19 +85,25 @@ def interface(bids_input, output, subject_list=None, collect=False, ncpus=1,
     :param subject_list: subject and session list filtering.  See
     "helpers.read_bids_dataset" for more information.
     :param collect: treats each subject as having only one session.
+    :param start_stage: start from a given input stage.
     :return:
     """
+
+    # read from bids dataset
     assert os.path.isdir(bids_input), bids_input + ' is not a directory!'
     if not os.path.isdir(output):
         os.makedirs(output)
-    session_generator = read_bids_dataset(bids_input, subject_list=subject_list,
-                                          collect_on_subject=collect)
+    session_generator = read_bids_dataset(
+        bids_input, subject_list=subject_list, collect_on_subject=collect
+    )
 
+    # run each session in serial
     for session in session_generator:
         # setup session configuration
-        outdir = os.path.join(output, 'sub-%s' % session['subject'],
-                              'ses-%s' % session['session'])
-        session_conf = HCPConfiguration(session, outdir)
+        out_dir = os.path.join(
+            output, 'sub-%s' % session['subject'], 'ses-%s' % session['session']
+        )
+        session_conf = HCPConfiguration(session, out_dir)
         # create pipelines
         pre = PreFreeSurfer(session_conf)
         free = FreeSurfer(session_conf)
@@ -109,7 +116,9 @@ def interface(bids_input, output, subject_list=None, collect=False, ncpus=1,
         order = [pre, free, post, vol, surf, fnlpp, execsum]
         if start_stage:
             names = [x.__class__.__name__ for x in order]
-            assert start_stage in names
+            assert start_stage in names, \
+                '"%s" is unknown, check class name and case for given stage' \
+                % start_stage
             order = order[names.index(start_stage):]
 
         # run pipelines

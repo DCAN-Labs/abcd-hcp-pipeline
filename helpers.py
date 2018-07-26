@@ -168,7 +168,7 @@ def get_relpath(filename):
     :param filename: path to bids nifti.
     :return: relative path from the bids subject folder.
     """
-    return filename
+    raise NotImplementedError
 
 
 def get_fmriname(filename):
