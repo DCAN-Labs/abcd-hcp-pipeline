@@ -277,14 +277,19 @@ class Stage(object):
 
     def setup(self):
         self.status.update_start_run()
-        return
 
     def teardown(self, result=0):
-        # @TODO update status in case of nonzero exit status
+        if result == 0:
+            self.status.update_success()
+        else:
+            self.status.update_failure(
+                'stage terminated with exit code %s' % result
+            )
         # @TODO update status in case of missing expected outputs
         # finally, terminate pipeline in case of failure.
-        return
-
+        if self.status['node_status'] != Status.states['succeeded']:
+            raise Exception('error caught during stage: %s' %
+                            self.__class__.__name__)
 
     @property
     def args(self):
