@@ -17,7 +17,7 @@ def _cli():
     parser = generate_parser()
     args = parser.parse_args()
 
-    return interface(args.bids_input,  args.output, args.subject_list,
+    return interface(args.bids_dir,  args.output_dir, args.subject_list,
                      args.collect, args.ncpus, args.stage)
 
 
@@ -41,14 +41,14 @@ def generate_parser(parser=None):
             """
         )
     parser.add_argument(
-        'bids_input',
+        'bids_dir',
         help='path to the input bids dataset root directory.  Read more '
              'about bids format in the link above.  It is recommended to use '
              'the dcan bids gui or dcm2bids to convert from participant '
              'dicoms.'
     )
     parser.add_argument(
-        'output',
+        'output_dir',
         help='path to the output directory for all intermediate and output '
              'files from the pipeline.'
     )
@@ -75,33 +75,35 @@ def generate_parser(parser=None):
     return parser
 
 
-def interface(bids_input, output, subject_list=None, collect=False, ncpus=1,
+def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
               start_stage=None):
     """
     main program interface
-    :param bids_input: input bids dataset see "helpers.read_bids_dataset" for
+    :param bids_dir: input bids dataset see "helpers.read_bids_dataset" for
     more information.
-    :param output: output folder
+    :param output_dir: output folder
     :param subject_list: subject and session list filtering.  See
     "helpers.read_bids_dataset" for more information.
     :param collect: treats each subject as having only one session.
-    :param start_stage: start from a given input stage.
+    :param start_stage: start from a given stage.
     :return:
     """
 
     # read from bids dataset
-    assert os.path.isdir(bids_input), bids_input + ' is not a directory!'
-    if not os.path.isdir(output):
-        os.makedirs(output)
+    assert os.path.isdir(bids_dir), bids_dir + ' is not a directory!'
+    if not os.path.isdir(output_dir):
+        os.makedirs(output_dir)
     session_generator = read_bids_dataset(
-        bids_input, subject_list=subject_list, collect_on_subject=collect
+        bids_dir, subject_list=subject_list, collect_on_subject=collect
     )
 
     # run each session in serial
     for session in session_generator:
         # setup session configuration
         out_dir = os.path.join(
-            output, 'sub-%s' % session['subject'], 'ses-%s' % session['session']
+            output_dir,
+            'sub-%s' % session['subject'],
+            'ses-%s' % session['session']
         )
         session_conf = HCPConfiguration(session, out_dir)
         # create pipelines
