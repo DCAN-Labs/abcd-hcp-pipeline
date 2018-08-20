@@ -1,8 +1,8 @@
 # dcan bids fmri-pipeline
 
 This software takes a bids folder as input and determines parameters
-for the dcan lab's modified hcp pipeline, calling upon the proper code to run the
-subject(s).
+for the dcan lab's modified hcp pipeline, calling upon the proper code
+to run the subject(s).
 
 To Call:
 
@@ -16,23 +16,12 @@ docker run --rm \
 Usage:
 
 ```{bash}
-usage: run.py [-h] [--participant-label ID [ID ...]] [--all-sessions]
-              [--ncpus NCPUS] [--stage STAGE]
-              bids_input output
-
-The Developmental Cognition and Neuroimaging (DCAN) lab fMRI Pipeline. This
-BIDS application initiates a functional MRI processing pipeline built upon the
-Human Connectome Project's own minimal processing pipelines. The application
-requires only a dataset conformed to the BIDS specification, and little-to-no
-additional configuration on the part of the user. BIDS format and applications
-are explained in more detail at http://bids.neuroimaging.io/
-
 positional arguments:
-  bids_input            path to the input bids dataset root directory. Read
+  bids_dir              path to the input bids dataset root directory. Read
                         more about bids format in the link above. It is
-                        recommended to use the dcan bids gui or dcm2bids
-                        to convert from participant dicoms.
-  output                path to the output directory for all intermediate and
+                        recommended to use the dcan bids gui or dcm2bids to
+                        convert from participant dicoms.
+  output_dir            path to the output directory for all intermediate and
                         output files from the pipeline.
 
 optional arguments:
@@ -42,38 +31,55 @@ optional arguments:
                         all ids found under the bids input directory.
   --all-sessions        collapses all sessions into one when running a
                         subject.
-  --ncpus NCPUS         number of cores to use for concurrent processing of
-                        functional runs.
-  --stage STAGE         begin from a given stage. Options: PreFreeSurfer,
-                        FreeSurfer, PostFreeSurfer, FMRIVolume, FMRISurface,
-                        DCANSignalPreprocessing, ExecutiveSummary
+  --ncpus NCPUS         number of cores to use for concurrent processing and
+                        algorithmic speedups. Warning: causes ANTs and
+                        FreeSurfer to produce non-deterministic results.
+  --stage STAGE         begin from a given stage, continuing through. Options:
+                        PreFreeSurfer, FreeSurfer, PostFreeSurfer, FMRIVolume,
+                        FMRISurface, DCANSignalPreprocessing, ExecutiveSummary
+  --bandstop LOWER UPPER
+                        parameters for motion regressor band-stop filter.
+                        It is recommended for the boundaries to match the
+                        inter-quartile range for participant group heart rate
+                        (bpm) or to match bids physio data directly. These
+                        parameters are only recommended for data acquired with
+                        a frequency of approx. 1 Hz or more. Default is no
+                        filter.
 ```
 
 #### Additional Configuration:
 
+Temporary/Scratch space:  If you need to make use of a particular mount
+for fast file io, you can provide the docker command with an additional
+volume mount: `docker run -v /my/fast/file/mnt:/tmp`
+
 software will use spin echo field maps if they are present, then
 gradient field maps, then None, consistent with best observed
- performances.
+performances.
 
-For complex use of spin echo field maps, i.e. mapping a pair to each
+For specified use of spin echo field maps, i.e. mapping a pair to each
 individual functional run, it is necessary to insert the "intendedFor"
 field into the bids input sidecar jsons, which specifies a functional
 run for each field map.  This field is explained in greater detail
 within the bids specification.
 
+In the case of multiband (fast TR) data, it is recommended to employ a
+band-stop filter to mitigate artifactually high motion numbers.  The
+band-stop filter used on motion regressors prior to frame-wise
+displacement calculation has parameters which must be chosen based on
+subject respiratory rate.
+
 #### Some current limitations:
 
-The default bandpass filter utilized (only for multiband/fast TR data)
-in the final preprocessing stage has been set to match a reasonable
-respiration rate range for young adults (10-20 yrs).  The potential
-effects on older populations are not well tested, and you may need
-to specify a different notch filter range for a significantly different
-age group.
+The ideal motion filtering parameters have not been robustly tested
+across repetition times or populations outside of adolescents.
+Additionally, automatic reading of physio data from bids format has not
+yet been implemented.
 
 software does not currently support dynamic acquisition parameters for
 a single modality (e.g. different phase encoding direction for 2 fmri).
-Otherparameters may only be tested by creating separate bids input
-datasets.
+Other parameters would have to be processed by creating separate bids
+datasets for sessions with varied fmri parameters.
 
 user must ensure that PhaseEncodingDirection is properly set in both
 spin echo field map and functional data, as dcm2bids does not always

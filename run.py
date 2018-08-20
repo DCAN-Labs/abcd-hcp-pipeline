@@ -4,9 +4,9 @@ import argparse
 import os
 
 from helpers import read_bids_dataset
-from pipelines import (HCPConfiguration, PreFreeSurfer, FreeSurfer,
+from pipelines import (ParameterSettings, PreFreeSurfer, FreeSurfer,
                        PostFreeSurfer, FMRIVolume, FMRISurface,
-                       DCANSignalPreprocessing, ExecutiveSummary)
+                       DCANSignalProcessing, ExecutiveSummary)
 
 
 def _cli():
@@ -18,7 +18,7 @@ def _cli():
     args = parser.parse_args()
 
     return interface(args.bids_dir,  args.output_dir, args.subject_list,
-                     args.collect, args.ncpus, args.stage)
+                     args.collect, args.ncpus, args.stage, args.bandstop)
 
 
 def generate_parser(parser=None):
@@ -64,28 +64,43 @@ def generate_parser(parser=None):
     parser.add_argument(
         '--ncpus', type=int, default=1,
         help='number of cores to use for concurrent processing and '
-             'algorithmic speedups.  Surface results are non-deterministic for '
+             'algorithmic speedups.  Warning: causes ANTs and FreeSurfer to '
+             'produce non-deterministic results.'
     )
     parser.add_argument(
         '--stage',
         help='begin from a given stage, continuing through.  Options: '
              'PreFreeSurfer, FreeSurfer, PostFreeSurfer, FMRIVolume, '
-             'FMRISurface, DCANSignalPreprocessing, ExecutiveSummary')
+             'FMRISurface, DCANSignalProcessing, ExecutiveSummary'
+    )
+    parser.add_argument(
+        '--bandstop', type=float, nargs=2, metavar=('LOWER', 'UPPER'),
+        help='parameters for motion regressor band-stop filter. It is '
+             'recommended for the boundaries to match the inter-quartile range '
+             'for participant group heart rate (bpm), or to match bids physio '
+             'data directly.  These parameters are only recommended for data '
+             'acquired with a frequency of approx. 1 Hz or more.  Default is '
+             'no filter'
+             # 'to use physio data from bids, or to use no filter if physio is '
+             # 'not available.' @TODO implement physio
+    )
 
     return parser
 
 
 def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
-              start_stage=None):
+              start_stage=None, bandstop_params=None):
     """
-    main program interface
+    main application interface
     :param bids_dir: input bids dataset see "helpers.read_bids_dataset" for
     more information.
     :param output_dir: output folder
     :param subject_list: subject and session list filtering.  See
     "helpers.read_bids_dataset" for more information.
     :param collect: treats each subject as having only one session.
+    :param ncpus: number of cores for parallelized processing.
     :param start_stage: start from a given stage.
+    :param bandstop_params: tuple of lower and upper bound for stop-band filter
     :return:
     """
 
@@ -105,17 +120,20 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
             'sub-%s' % session['subject'],
             'ses-%s' % session['session']
         )
-        session_conf = HCPConfiguration(session, out_dir)
+        session_spec = ParameterSettings(session, out_dir)
         # create pipelines
-        pre = PreFreeSurfer(session_conf)
-        free = FreeSurfer(session_conf)
-        post = PostFreeSurfer(session_conf)
-        vol = FMRIVolume(session_conf)
-        surf = FMRISurface(session_conf)
-        fnlpp = DCANSignalPreprocessing(session_conf)
-        execsum = ExecutiveSummary(session_conf)
+        pre = PreFreeSurfer(session_spec)
+        free = FreeSurfer(session_spec)
+        post = PostFreeSurfer(session_spec)
+        vol = FMRIVolume(session_spec)
+        surf = FMRISurface(session_spec)
+        sigproc = DCANSignalProcessing(session_spec)
+        execsum = ExecutiveSummary(session_spec)
 
-        order = [pre, free, post, vol, surf, fnlpp, execsum]
+        if bandstop_params is not None:
+            sigproc.set_bandstop_filter(*bandstop_params)
+
+        order = [pre, free, post, vol, surf, sigproc, execsum]
         if start_stage:
             names = [x.__class__.__name__ for x in order]
             assert start_stage in names, \
