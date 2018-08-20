@@ -174,13 +174,30 @@ def get_relpath(filename):
 def get_fmriname(filename):
     """
     :param filename: path to bids functional nifti
-    :return: fmriname unique to subject/session.
+    :return: name of fmri run, e.g. "task-rest01".
     """
     name = os.path.basename(filename)
     expr = re.compile(r'.*(task-[^_]+).*run-([0-9]+).*')
     taskrun = expr.match(name)
-    fmriname = taskrun.group(1) + taskrun.group(2)
+    if taskrun:
+        fmriname = taskrun.group(1) + taskrun.group(2)
+    else:
+        # handle optional bids "run" field:
+        fmriname = get_taskname(filename)
+        fmriname += '01'
     return fmriname
+
+
+def get_taskname(filename):
+    """
+    :param filename: path to bids functional nifti
+    :return: name of task, e.g. "task-nback"
+    """
+    name = os.path.basename(filename)
+    expr = re.compile(r'.*(task-[^_]+).*')
+    task = expr.match(name)
+    taskname = task.group(1)
+    return taskname
 
 
 def ijk_to_xyz(vec):
