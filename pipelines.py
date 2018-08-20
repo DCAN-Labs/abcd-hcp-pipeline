@@ -1,6 +1,7 @@
 import inspect
 import json
 import multiprocessing as mp
+import re
 import subprocess
 
 import os
@@ -8,13 +9,14 @@ import os
 from helpers import (get_fmriname, get_readoutdir, get_relpath, ijk_to_xyz)
 
 
-class HCPConfiguration(object):
+class ParameterSettings(object):
     """
     Paths to files and settings required to run DCAN HCP.  Class attributes 
-    should be any parameters which should in NO circumstances change between 
-    subjects.  Instance attributes will be attributes that might change, 
-    for example, repetition time (might) change between scans in an 
-    experimental study, but the target atlas wouldn't.
+    should be any parameters which are independent of input image parameters,
+    for example, the target atlases. Instance attributes are attributes which
+    are read from or dependent upon inputs.  Additionally, they may include
+    special options for processing or for overriding class attributes.  All
+    attributes will be formatted according to the available
     """
 
     # @ templates @ #
@@ -69,7 +71,7 @@ class HCPConfiguration(object):
 
     def __init__(self, bids_data, output_directory):
         """
-        Configuration to run HCP Pipeline on a single subject session.
+        Specification to run pipeline on a single subject session.
         :param bids_data: yielded spec from read_bids_dataset
         :param output_directory: output directory for pipeline
         """
@@ -125,11 +127,17 @@ class HCPConfiguration(object):
 
         # @ output files @ #
         self.path = os.path.join(output_directory, 'files')
-        self.logs = os.path.join(output_directory, 'processing_logs')
+        self.logs = os.path.join(output_directory, 'logs')
         self.subject = self.bids_data['subject']
 
         # print command for HCP
         self.printcom = ''
+
+    def __getitem__(self, item):
+        return self._params()[item]
+
+    def __setitem__(self, key, value):
+        setattr(self, key, value)
 
     def _params(self):
         params = inspect.getmembers(self, lambda a: not inspect.isroutine(a))
@@ -243,17 +251,19 @@ class Stage(object):
     Base abstract class for pipeline stages.
 
     attributes:
-    config: HCPConfiguration object.
-    kwargs: dict of attributes returned from HCPConfiguration object.
+    config: ParameterSettings object.
+    kwargs: dict of attributes returned from ParamterSettings object.
 
-    abstract methods which need overriding:
+    abstract methods which require overriding:
     script: script / tool / executable to run as a subprocess.
     args:  should provide command line arguments to the script.  Usually
     utilizes a "spec" attribute which is then formatted with the "kwargs"
-    attribute.  See PreFreeSurfer.
+    attribute.  See PreFreeSurfer.  Must be a generator for concurrency.  See
+    FMRIVolume.
 
-    optional:
-    cmdline:  will need overriding to utilize concurrency.  See FMRIVolume.
+    optional overriding:
+    cmdline:  will need overriding as generator to utilize concurrency.  See
+    FMRIVolume.
     setup: executes prior to executable.  Recommended to wrap super().
     teardown: executes after executable completes.  Recommended to wrap super().
 
@@ -580,17 +590,65 @@ class FMRISurface(Stage):
             yield ' '.join((script, argset))
 
 
-class DCANSignalPreprocessing(Stage):
+class DCANSignalProcessing(Stage):
 
-    script = '{DCANSIGPREPDIR}/FNL_preproc_wrapper.sh'
+    script = '{DCANSIGPREPDIR}/dcan_signal_processing.py'
 
     spec = ' --subject={subject}' \
            ' --output-folder={path}' \
-           ' --version=FNL_preproc_v2'
+           ' --fd-threshold={fd_threshold}' \
+           ' --filter-order={filter_order}' \
+           ' --lower-bpf={lower_bpf}' \
+           ' --upper-bpf={upper_bpf}' \
+           ' --motion-filter-type={motion_filter_type}' \
+           ' --physio={physio}' \
+           ' --motion-filter-option={motion_filter_option}' \
+           ' --motion-filter-order={motion_filter_order}' \
+           ' --band-stop-min={band_stop_min}' \
+           ' --band-stop-max={band_stop_max}' \
+           ' --brain-radius={brain_radius}' \
+           ' --skip-seconds={skip_seconds}'
+
+    def set_bandstop_filter(self, lower_bound, upper_bound,
+                            filter_type='notch'):
+        self.kwargs['stopband_min'] = lower_bound
+        self.kwargs['stopband_max'] = upper_bound
+
+    def setup(self):
+        """
+        make ventricle and white matter masks.
+        :return:
+        """
+        super(self).setup()
+        script = self.script.format(**os.environ)
+        args = self.spec.format(**self.kwargs)
+        cmdline = ' '.join((script, args))
+        cmdline += ' --setup'
+
+    def teardown(self, result=0):
+        """
+        concatenate dtseries, parcellate, create grayplots.
+        :param result:
+        :return:
+        """
+        script = self.script.format(**os.environ)
+        args = self.spec.format(**self.kwargs)
+        cmdline = ' '.join((script, args))
+        fmrilist = self.config.get_bids('func')
+        rest = re.compile(r'task-rest.*')
+        concatenate = []
+        super(self).teardown(result)
 
     @property
     def args(self):
-        return self.spec.format(**self.kwargs)
+        for fmri in self.config.get_bids('func'):
+            self.kwargs['task'] = get_fmriname(fmri)
+            yield self.spec.format(**self.kwargs)
+
+    def cmdline(self):
+        script = self.script.format(**os.environ)
+        for argset in self.args:
+            yield ' '.join((script, argset))
 
 
 class ExecutiveSummary(Stage):
@@ -612,6 +670,5 @@ def _call(cmd, out_log, err_log, num_threads=1):
         env['OMP_NUM_THREADS'] = str(num_threads)
         env['ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS'] = str(num_threads)
     with open(out_log, 'w') as out, open(err_log, 'w') as err:
-        result = subprocess.run(cmd, shell=True, stdout=out, stderr=err,
-                                env=env)
+        result = subprocess.run(cmd.split(), stdout=out, stderr=err, env=env)
     return result.returncode
