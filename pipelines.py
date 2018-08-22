@@ -6,7 +6,8 @@ import subprocess
 
 import os
 
-from helpers import (get_fmriname, get_readoutdir, get_relpath, ijk_to_xyz)
+from helpers import (get_fmriname, get_readoutdir, get_relpath, get_taskname,
+                     ijk_to_xyz)
 
 
 class ParameterSettings(object):
@@ -69,6 +70,24 @@ class ParameterSettings(object):
     subcortgraylabels = "{HCPPIPEDIR_Config}/FreeSurferSubcortical" \
                             "LabelTableLut.txt"
 
+    # @ signal processing defaults @ #
+    # brain radius of subject set
+    brain_radius = 50
+    # threshold for valid signal regression frames.
+    fd_threshold = 0.3
+    # bold signal bandpass filter parameters
+    filter_order = 2
+    upper_bpf = 0.009
+    lower_bpf = 0.080
+    # motion regressor bandstop filter parameters
+    motion_filter_type = 'notch'
+    motion_filter_order = 2
+    band_stop_max = None
+    band_stop_min = None
+    motion_filter_option = 5
+    # seconds to omit from beginning of scan
+    skip_seconds = 5
+
     def __init__(self, bids_data, output_directory):
         """
         Specification to run pipeline on a single subject session.
@@ -124,6 +143,9 @@ class ParameterSettings(object):
 
         if not hasattr(self, 'fmribfcmethod'):
             self.fmribfcmethod = None
+
+        # @TODO handle bids formatted physio data
+        self.physio = None
 
         # @ output files @ #
         self.path = os.path.join(output_directory, 'files')
@@ -276,7 +298,13 @@ class Stage(object):
         self.status = Status(self._get_log_dir())
 
     def __str__(self):
-        string = ' \\\n    '.join(self.cmdline().split())
+        cmdline = self.cmdline()
+        if inspect.isgenerator(cmdline):
+            string = ''
+            for cmd in cmdline:
+                string += ' \\\n    '.join(cmd.split()) + '\n'
+        else:
+            string = ' \\\n    '.join(cmdline.split())
         return string
 
     def _get_log_dir(self):
@@ -596,6 +624,7 @@ class DCANSignalProcessing(Stage):
 
     spec = ' --subject={subject}' \
            ' --output-folder={path}' \
+           ' --task={fmriname}' \
            ' --fd-threshold={fd_threshold}' \
            ' --filter-order={filter_order}' \
            ' --lower-bpf={lower_bpf}' \
@@ -611,6 +640,7 @@ class DCANSignalProcessing(Stage):
 
     def set_bandstop_filter(self, lower_bound, upper_bound,
                             filter_type='notch'):
+        self.kwargs['motion_filter_type'] = filter_type
         self.kwargs['stopband_min'] = lower_bound
         self.kwargs['stopband_max'] = upper_bound
 
@@ -619,11 +649,15 @@ class DCANSignalProcessing(Stage):
         make ventricle and white matter masks.
         :return:
         """
-        super(self).setup()
+        super(__class__, self).setup()
         script = self.script.format(**os.environ)
         args = self.spec.format(**self.kwargs)
-        cmdline = ' '.join((script, args))
-        cmdline += ' --setup'
+        cmd = ' '.join((script, args))
+        cmd += ' --setup'
+        log_dir = self._get_log_dir()
+        out_log = os.path.join(log_dir, self.__class__.__name__ + '.out')
+        err_log = os.path.join(log_dir, self.__class__.__name__ + '.err')
+        result = _call(cmd, out_log, err_log)
 
     def teardown(self, result=0):
         """
@@ -634,15 +668,16 @@ class DCANSignalProcessing(Stage):
         script = self.script.format(**os.environ)
         args = self.spec.format(**self.kwargs)
         cmdline = ' '.join((script, args))
+        pattern = re.compile('task-rest.*')
         fmrilist = self.config.get_bids('func')
-        rest = re.compile(r'task-rest.*')
-        concatenate = []
-        super(self).teardown(result)
+        tasklist = list(set([get_taskname(f) for f in fmrilist]))
+        concatenate = list(filter(pattern.match, tasklist))
+        super(__class__, self).teardown(result)
 
     @property
     def args(self):
         for fmri in self.config.get_bids('func'):
-            self.kwargs['task'] = get_fmriname(fmri)
+            self.kwargs['fmriname'] = get_fmriname(fmri)
             yield self.spec.format(**self.kwargs)
 
     def cmdline(self):
