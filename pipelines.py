@@ -81,7 +81,7 @@ class ParameterSettings(object):
     lower_bpf = 0.080
     # motion regressor bandstop filter parameters
     motion_filter_type = 'notch'
-    motion_filter_order = 2
+    motion_filter_order = 4
     band_stop_max = None
     band_stop_min = None
     motion_filter_option = 5
@@ -128,7 +128,7 @@ class ParameterSettings(object):
             self.seunwarpdir = ijk_to_xyz(
                 self.bids_data['func_metadata']['PhaseEncodingDirection'])
 
-            # set unused fmap args
+            # set unused fmap parameters to none
             self.fmapmag = self.fmapphase = self.fmapgeneralelectric = \
                 self.echodiff = self.gdcoeffs = None
             # @TODO decide on bfcmethod for fmri data.
@@ -138,8 +138,14 @@ class ParameterSettings(object):
             # gradient field map delta TE
             self.echodiff = None  # @TODO
 
+            # set unused spin echo parameters to none
+            self.seunwarpdir = None
+
         else:
-            self.dcmethod = 'NONE'
+            # all distortion correction parameters set to none
+            self.fmapmag = self.fmapphase = self.fmapgeneralelectric = \
+                self.echodiff = self.gdcoeffs = self.dcmethod = \
+                self.seunwarpdir = self.echospacing = None
 
         if not hasattr(self, 'fmribfcmethod'):
             self.fmribfcmethod = None
@@ -620,7 +626,7 @@ class FMRISurface(Stage):
 
 class DCANSignalProcessing(Stage):
 
-    script = '{DCANSIGPREPDIR}/dcan_signal_processing.py'
+    script = '{DCANSIGPROCDIR}/dcan_signal_processing.py'
 
     spec = ' --subject={subject}' \
            ' --output-folder={path}' \
@@ -641,8 +647,8 @@ class DCANSignalProcessing(Stage):
     def set_bandstop_filter(self, lower_bound, upper_bound,
                             filter_type='notch'):
         self.kwargs['motion_filter_type'] = filter_type
-        self.kwargs['stopband_min'] = lower_bound
-        self.kwargs['stopband_max'] = upper_bound
+        self.kwargs['band_stop_min'] = lower_bound
+        self.kwargs['band_stop_max'] = upper_bound
 
     def setup(self):
         """
