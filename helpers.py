@@ -200,7 +200,7 @@ def get_taskname(filename):
     return taskname
 
 
-def ijk_to_xyz(vec):
+def ijk_to_xyz(vec, patient_orientation=None):
     """
     converts canonical quaternion unit vector symbols to cartesian.
     :param vec: one of i, j, k +/-
