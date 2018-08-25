@@ -50,12 +50,13 @@ def generate_parser(parser=None):
     parser.add_argument(
         'output_dir',
         help='path to the output directory for all intermediate and output '
-             'files from the pipeline.'
+             'files from the pipeline, also path in which logs are stored.'
     )
     parser.add_argument(
         '--participant-label', dest='subject_list', metavar='ID', nargs='+',
         help='optional list of participant ids to run. Default is all ids '
-             'found under the bids input directory.'
+             'found under the bids input directory.  A participant label '
+             'does not include "sub-"'
     )
     parser.add_argument(
         '--all-sessions', dest='collect', action='store_true',
@@ -121,6 +122,7 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
             'ses-%s' % session['session']
         )
         session_spec = ParameterSettings(session, out_dir)
+
         # create pipelines
         pre = PreFreeSurfer(session_spec)
         free = FreeSurfer(session_spec)
@@ -130,9 +132,11 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
         sigproc = DCANSignalProcessing(session_spec)
         execsum = ExecutiveSummary(session_spec)
 
+        # set user parameters
         if bandstop_params is not None:
             sigproc.set_bandstop_filter(*bandstop_params)
 
+        # determine pipeline order
         order = [pre, free, post, vol, surf, sigproc, execsum]
         if start_stage:
             names = [x.__class__.__name__ for x in order]

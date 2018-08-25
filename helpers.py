@@ -55,6 +55,10 @@ def read_bids_dataset(bids_input, subject_list=None, collect_on_subject=False):
         else:
             subsess += list(product([s], sessions))
 
+    assert len(subsess), 'bids data not found for participants. If labels ' \
+            'were provided, check the participant labels for errors.  ' \
+            'Otherwise check that the bids folder provided is correct.'
+
     for subject, sessions in subsess:
         # get relevant image modalities
         anat = set_anatomicals(layout, subject, sessions)
