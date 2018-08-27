@@ -624,9 +624,9 @@ class FMRISurface(Stage):
             yield ' '.join((script, argset))
 
 
-class DCANSignalProcessing(Stage):
+class DCANBoldProcessing(Stage):
 
-    script = '{DCANSIGPROCDIR}/dcan_signal_processing.py'
+    script = '{DCANBOLDPROCDIR}/dcan_bold_proc.py'
 
     spec = ' --subject={subject}' \
            ' --output-folder={path}' \

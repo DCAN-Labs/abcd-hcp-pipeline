@@ -6,7 +6,7 @@ import os
 from helpers import read_bids_dataset
 from pipelines import (ParameterSettings, PreFreeSurfer, FreeSurfer,
                        PostFreeSurfer, FMRIVolume, FMRISurface,
-                       DCANSignalProcessing, ExecutiveSummary)
+                       DCANBoldProcessing, ExecutiveSummary)
 
 
 def _cli():
@@ -72,7 +72,7 @@ def generate_parser(parser=None):
         '--stage',
         help='begin from a given stage, continuing through.  Options: '
              'PreFreeSurfer, FreeSurfer, PostFreeSurfer, FMRIVolume, '
-             'FMRISurface, DCANSignalProcessing, ExecutiveSummary'
+             'FMRISurface, DCANBoldProcessing, ExecutiveSummary'
     )
     parser.add_argument(
         '--bandstop', type=float, nargs=2, metavar=('LOWER', 'UPPER'),
@@ -129,15 +129,15 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
         post = PostFreeSurfer(session_spec)
         vol = FMRIVolume(session_spec)
         surf = FMRISurface(session_spec)
-        sigproc = DCANSignalProcessing(session_spec)
+        boldproc = DCANBoldProcessing(session_spec)
         execsum = ExecutiveSummary(session_spec)
 
         # set user parameters
         if bandstop_params is not None:
-            sigproc.set_bandstop_filter(*bandstop_params)
+            boldproc.set_bandstop_filter(*bandstop_params)
 
         # determine pipeline order
-        order = [pre, free, post, vol, surf, sigproc, execsum]
+        order = [pre, free, post, vol, surf, boldproc, execsum]
         if start_stage:
             names = [x.__class__.__name__ for x in order]
             assert start_stage in names, \

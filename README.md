@@ -36,7 +36,7 @@ optional arguments:
                         FreeSurfer to produce non-deterministic results.
   --stage STAGE         begin from a given stage, continuing through. Options:
                         PreFreeSurfer, FreeSurfer, PostFreeSurfer, FMRIVolume,
-                        FMRISurface, DCANSignalPreprocessing, ExecutiveSummary
+                        FMRISurface, DCANBoldProcessing, ExecutiveSummary
   --bandstop LOWER UPPER
                         parameters for motion regressor band-stop filter.
                         It is recommended for the boundaries to match the
