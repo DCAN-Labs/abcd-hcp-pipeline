@@ -58,7 +58,7 @@ gradient field maps, then None, consistent with best observed
 performances.
 
 For specified use of spin echo field maps, i.e. mapping a pair to each
-individual functional run, it is necessary to insert the "intendedFor"
+individual functional run, it is necessary to insert the "IntendedFor"
 field into the bids input sidecar jsons, which specifies a functional
 run for each field map.  This field is explained in greater detail
 within the bids specification.

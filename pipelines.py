@@ -416,7 +416,7 @@ class PreFreeSurfer(Stage):
 
     def _get_intended_sefmaps(self):
         """
-        search for intendedFor field from sidecar json, else give the first
+        search for IntendedFor field from sidecar json, else give the first
         spin echo pair.  @TODO Unfortunately, it will cause problems if someone
         includes the substring "T1w" in a spin echo sidecar name.
         :return: pair of spin echos, parallel
@@ -428,7 +428,7 @@ class PreFreeSurfer(Stage):
 
         for idx, sefm in enumerate(self.config.get_bids('fmap_metadata',
                                                      parallel)):
-            intended_targets = sefm.get('intendedFor', [])
+            intended_targets = sefm.get('IntendedFor', [])
             if 'T1w' in ' '.join(intended_targets):
                 intended_idx = idx
                 break
@@ -547,7 +547,7 @@ class FMRIVolume(Stage):
 
     def _get_intended_sefmaps(self):
         """
-        search for intendedFor field from sidecar json to determine
+        search for IntendedFor field from sidecar json to determine
         appropriate field map pair, else give the first spin echo pair.
         :return: pair of spin echo filenames, positive then negative
         """
@@ -558,7 +558,7 @@ class FMRIVolume(Stage):
 
         for idx, sefm in enumerate(self.config.get_bids('fmap_metadata',
                                                      parallel)):
-            intended_targets = sefm.get('intendedFor', [])
+            intended_targets = sefm.get('IntendedFor', [])
             if get_relpath(self.kwargs['fmritcs']) in ' '.join(
                     intended_targets):
                 intended_idx = idx

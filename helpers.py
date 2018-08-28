@@ -118,7 +118,7 @@ def set_fieldmaps(layout, subject, sessions):
     types = [x.type for x in fmap]
     indices = [i for i, x in enumerate(types) if x == 'epi']
     if len(indices):
-        # @TODO read intendedFor field to map field maps to functionals.
+        # @TODO read IntendedFor field to map field maps to functionals.
         positive = [i for i, x in enumerate(fmap_metadata) if '-' not in x[
             'PhaseEncodingDirection']]
         negative = [i for i, x in enumerate(fmap_metadata) if '-' in x[
