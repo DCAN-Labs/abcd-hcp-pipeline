@@ -172,7 +172,7 @@ def get_relpath(filename):
     :param filename: path to bids nifti.
     :return: relative path from the bids subject folder.
     """
-    raise NotImplementedError
+    return '/'.join(filename.split('/')[-3:])
 
 
 def get_fmriname(filename):
