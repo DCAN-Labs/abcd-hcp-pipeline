@@ -323,10 +323,9 @@ class Stage(object):
         self.status.update_start_run()
 
     def teardown(self, result=0):
-        if type(result) is list:
-            if all(v == 0 for v in result):
-                result = 0
-        elif result == 0:
+        if type(result) is list and all(v == 0 for v in result):
+            result = 0
+        if result == 0:
             self.status.update_success()
         else:
             self.status.update_failure(
