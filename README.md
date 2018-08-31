@@ -4,6 +4,21 @@ This software takes a bids folder as input and determines parameters
 for the dcan lab's modified hcp pipeline, calling upon the proper code
 to run the subject(s).
 
+#### Installation
+
+```{bash}
+# clone the repository
+git clone git@gitlab.com:Fair_lab/bidsapp.git
+
+# change directory into the repository's folder
+cd bidsapp
+
+# install the requirements from within the cloned repository
+pip3 install --user -r requirements.txt
+```
+
+#### Usage:
+
 To Call:
 
 ```{bash}
