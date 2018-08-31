@@ -70,7 +70,7 @@ class ParameterSettings(object):
     subcortgraylabels = "{HCPPIPEDIR_Config}/FreeSurferSubcortical" \
                             "LabelTableLut.txt"
 
-    # @ signal processing defaults @ #
+    # @ bold processing defaults @ #
     # brain radius of subject set
     brain_radius = 50
     # threshold for valid signal regression frames.
@@ -82,8 +82,8 @@ class ParameterSettings(object):
     # motion regressor bandstop filter parameters
     motion_filter_type = 'notch'
     motion_filter_order = 4
-    band_stop_max = None
-    band_stop_min = None
+    band_stop_min = 18.582
+    band_stop_max = 25.7263
     motion_filter_option = 5
     # seconds to omit from beginning of scan
     skip_seconds = 5
@@ -624,7 +624,7 @@ class FMRISurface(Stage):
             yield ' '.join((script, argset))
 
 
-class DCANBoldProcessing(Stage):
+class DCANBOLDProcessing(Stage):
 
     script = '{DCANBOLDPROCDIR}/dcan_bold_proc.py'
 
@@ -643,6 +643,9 @@ class DCANBoldProcessing(Stage):
            ' --band-stop-max={band_stop_max}' \
            ' --brain-radius={brain_radius}' \
            ' --skip-seconds={skip_seconds}'
+
+    def __init__(self, config):
+        super(__class__, self).__init__(config)
 
     def set_bandstop_filter(self, lower_bound, upper_bound,
                             filter_type='notch'):
@@ -711,5 +714,5 @@ def _call(cmd, out_log, err_log, num_threads=1):
         env['OMP_NUM_THREADS'] = str(num_threads)
         env['ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS'] = str(num_threads)
     with open(out_log, 'w') as out, open(err_log, 'w') as err:
-        result = subprocess.run(cmd.split(), stdout=out, stderr=err, env=env)
-    return result.returncode
+        result = subprocess.call(cmd.split(), stdout=out, stderr=err, env=env)
+    return result
