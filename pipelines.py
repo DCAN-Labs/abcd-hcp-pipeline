@@ -323,6 +323,8 @@ class Stage(object):
         self.status.update_start_run()
 
     def teardown(self, result=0):
+        if type(result) is list and all(v == 0 for v in result):
+            result = 0
         if result == 0:
             self.status.update_success()
         else:
@@ -361,6 +363,10 @@ class Stage(object):
                 cmdlist.append((cmd, out_log, err_log))
             with mp.Pool(processes=ncpus) as pool:
                 result = pool.starmap(_call, cmdlist)
+                print(result)    
+                if type(result.returncode) is list:
+                    if all(v == 0 for v in result.returncode):
+                        result.returncode = 0
         else:
             cmd = self.cmdline()
             log_dir = self._get_log_dir()
@@ -715,4 +721,7 @@ def _call(cmd, out_log, err_log, num_threads=1):
         env['ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS'] = str(num_threads)
     with open(out_log, 'w') as out, open(err_log, 'w') as err:
         result = subprocess.call(cmd.split(), stdout=out, stderr=err, env=env)
+        if type(result) is list:
+            if all(v == 0 for v in result):
+                result = 0
     return result
