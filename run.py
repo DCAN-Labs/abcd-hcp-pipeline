@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! /usr/bin/env python3
 
 import argparse
 import os
@@ -6,7 +6,7 @@ import os
 from helpers import read_bids_dataset
 from pipelines import (ParameterSettings, PreFreeSurfer, FreeSurfer,
                        PostFreeSurfer, FMRIVolume, FMRISurface,
-                       DCANBoldProcessing, ExecutiveSummary)
+                       DCANBOLDProcessing, ExecutiveSummary)
 
 
 def _cli():
@@ -72,7 +72,7 @@ def generate_parser(parser=None):
         '--stage',
         help='begin from a given stage, continuing through.  Options: '
              'PreFreeSurfer, FreeSurfer, PostFreeSurfer, FMRIVolume, '
-             'FMRISurface, DCANBoldProcessing, ExecutiveSummary'
+             'FMRISurface, DCANBOLDProcessing, ExecutiveSummary'
     )
     parser.add_argument(
         '--bandstop', type=float, nargs=2, metavar=('LOWER', 'UPPER'),
@@ -129,7 +129,7 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
         post = PostFreeSurfer(session_spec)
         vol = FMRIVolume(session_spec)
         surf = FMRISurface(session_spec)
-        boldproc = DCANBoldProcessing(session_spec)
+        boldproc = DCANBOLDProcessing(session_spec)
         execsum = ExecutiveSummary(session_spec)
 
         # set user parameters
