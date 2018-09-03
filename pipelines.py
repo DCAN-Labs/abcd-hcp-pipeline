@@ -6,8 +6,8 @@ import subprocess
 
 import os
 
-from helpers import (get_fmriname, get_readoutdir, get_relpath, get_taskname,
-                     ijk_to_xyz)
+from helpers import (get_fmriname, get_readoutdir, get_relpath,
+                     get_taskname, ijk_to_xyz)
 
 
 class ParameterSettings(object):
@@ -432,8 +432,8 @@ class PreFreeSurfer(Stage):
             if 'T1w' in ' '.join(intended_targets):
                 intended_idx = idx
                 break
-        else:
-            intended_idx = 0
+            else:
+                intended_idx = 0
 
         return self.config.get_bids('fmap', 'positive', intended_idx), \
             self.config.get_bids('fmap', 'negative', intended_idx)
@@ -563,8 +563,8 @@ class FMRIVolume(Stage):
                     intended_targets):
                 intended_idx = idx
                 break
-        else:
-            intended_idx = 0
+            else:
+                intended_idx = 0
 
         return self.config.get_bids('fmap', 'positive', intended_idx), \
             self.config.get_bids('fmap', 'negative', intended_idx)
