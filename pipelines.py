@@ -52,7 +52,7 @@ class ParameterSettings(object):
     # final time series isotropic resolution (mm)
     fmrires = 2.0
     # resolution of greyordinates (mm)
-    grayordinateres = 2.0
+    grayordinatesres = 2
     # smoothing sigma for final greyordinate data (mm)
     smoothingFWHM = 2.0
     # surface registration algorithm, one of: FS, MSMSulc
@@ -363,10 +363,9 @@ class Stage(object):
                 cmdlist.append((cmd, out_log, err_log))
             with mp.Pool(processes=ncpus) as pool:
                 result = pool.starmap(_call, cmdlist)
-                print(result)    
-                if type(result.returncode) is list:
-                    if all(v == 0 for v in result.returncode):
-                        result.returncode = 0
+                if type(result) is list:
+                    if all(v == 0 for v in result):
+                        result = 0
         else:
             cmd = self.cmdline()
             log_dir = self._get_log_dir()
@@ -488,7 +487,7 @@ class PostFreeSurfer(Stage):
            ' --subject={subject}' \
            ' --surfatlasdir={surfatlasdir}' \
            ' --grayordinatesdir={grayordinatesdir}' \
-           ' --grayordinateres={grayordinateres}' \
+           ' --grayordinatesres={grayordinatesres}' \
            ' --hiresmesh={hiresmesh}' \
            ' --lowresmesh={lowresmesh}' \
            ' --subcortgraylabels={subcortgraylabels}' \
@@ -606,7 +605,7 @@ class FMRISurface(Stage):
            ' --lowresmesh={lowresmesh}' \
            ' --fmrires={fmrires}' \
            ' --smoothingFWHM={smoothingFWHM}' \
-           ' --grayordinateres={grayordinateres}' \
+           ' --grayordinatesres={grayordinatesres}' \
            ' --regname={regname}'
 
     def __init__(self, config):
