@@ -90,7 +90,7 @@ def generate_parser(parser=None):
 
 
 def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
-              start_stage=None, bandstop_params=None):
+              start_stage=None, bandstop_params=None, check_only=False):
     """
     main application interface
     :param bids_dir: input bids dataset see "helpers.read_bids_dataset" for
@@ -145,9 +145,18 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
                 % start_stage
             order = order[names.index(start_stage):]
 
+        if check_only:
+            for stage in order:
+                print('checking outputs for %s' % stage.__class__.__name__)
+                try:
+                    stage.check_expected_outputs()
+                except AssertionError:
+                    pass
+            return
+
         # run pipelines
         for stage in order:
-            print('running ' + stage.__class__.__name__)
+            print('running %s' % stage.__class__.__name__)
             print(stage)
             stage.run(ncpus)
 

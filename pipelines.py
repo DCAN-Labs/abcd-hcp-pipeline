@@ -311,6 +311,10 @@ class Stage(object):
         self.config = config
         self.kwargs = config.get_params()
         self.status = Status(self._get_log_dir())
+        here = os.path.dirname(os.path.realpath(__file__))
+        with open(os.path.join(here, 'pipeline_expected_outputs.json')) as fd:
+            jso = json.load(fd)
+            self.expected_outputs_spec = jso[self.__class__.__name__]
 
     def __str__(self):
         cmdline = self.cmdline()
@@ -346,8 +350,29 @@ class Stage(object):
             for f in dne_list:
                 print('file not found: %s' % f)
             return False
-        else:
-            return True
+
+        return True
+
+    def get_expected_outputs(self):
+        """
+        formats and returns expected outputs.  Must be overridden for
+        expected outputs of concurrent executions.
+        :return: formatted list of expected outputs
+        """
+        expected_outputs = [p.format(**self.kwargs)
+                            for p in self.expected_outputs_spec]
+        expected_outputs += self.get_conditional_expected_outputs()
+        return expected_outputs
+
+    def get_conditional_expected_outputs(self):
+        """
+        this method includes any logic which needs to be used to determine
+        if a file is an expected output, for example when different input
+        modalities are utilized.  Override this for individual stages to
+        have contextually defined expected outputs.
+        :return: list of any conditional expected outputs
+        """
+        return []
 
     def remove_expected_outputs(self):
         """
@@ -370,6 +395,7 @@ class Stage(object):
         :return: None
         """
         self.status.update_start_run()
+        self.remove_expected_outputs()
 
     def teardown(self, result=0):
         """
@@ -408,26 +434,6 @@ class Stage(object):
         overridden.
         """
         raise NotImplementedError
-
-    @property
-    def expected_outputs(self):
-        """
-        expected outputs for this stage.  It should be a list of format
-        strings which point to system paths for subject's files.  Must use
-        variable names like "path" or "subject" as defined in
-        ParameterSettings.  Must be overridden.
-        """
-        raise NotImplementedError
-
-    def get_expected_outputs(self):
-        """
-        formats and returns expected outputs.  Must be overridden for
-        expected outputs of concurrent executions.
-        :return:
-        """
-        expected_outputs = [p.format(**self.kwargs)
-                            for p in self.expected_outputs]
-        return expected_outputs
 
     def cmdline(self):
         """
@@ -502,7 +508,7 @@ class PreFreeSurfer(Stage):
            ' --useT2={useT2}' \
            ' --printcom={printcom}'
 
-    expected_outputs = []
+    expected_outputs_spec = json.load('file')
 
     def __init__(self, config):
         super(__class__, self).__init__(config)
@@ -557,6 +563,8 @@ class FreeSurfer(Stage):
            ' --useT2={useT2}' \
            ' --printcom={printcom}'
 
+    expected_outputs_spec = json.load('file')
+
     def __init__(self, config):
         super(__class__, self).__init__(config)
         self.kwargs['freesurferdir'] = os.path.join(
@@ -567,8 +575,6 @@ class FreeSurfer(Stage):
             self.kwargs['freesurferdir'], 'T1w_acpc_dc_restore_brain.nii.gz')
         self.kwargs['t2_restore'] = os.path.join(
             self.kwargs['freesurferdir'], 'T2w_acpc_dc_restore.nii.gz')
-
-    expected_outputs = []
 
     @property
     def args(self):
@@ -604,7 +610,8 @@ class PostFreeSurfer(Stage):
            ' --template2mmmask={template2mmmask}' \
            ' --printcom={printcom}'
 
-    expected_outputs = []
+    expected_outputs_spec = [
+    ]
 
     def __init__(self, config):
         super(__class__, self).__init__(config)
@@ -639,7 +646,7 @@ class FMRIVolume(Stage):
            ' --biascorrection={fmribfcmethod}' \
            ' --mctype={mctype}'
 
-    expected_outputs = []
+    expected_outputs_spec = []
 
     def __init__(self, config):
         super(__class__, self).__init__(config)
@@ -708,7 +715,7 @@ class FMRISurface(Stage):
            ' --grayordinatesres={grayordinatesres}' \
            ' --regname={regname}'
 
-    expected_outputs = []
+    expected_outputs_spec = []
 
     def __init__(self, config):
         super(__class__, self).__init__(config)
@@ -751,7 +758,7 @@ class DCANBOLDProcessing(Stage):
            ' --brain-radius={brain_radius}' \
            ' --skip-seconds={skip_seconds}'
 
-    expected_outputs = []
+    expected_outputs_spec = []
 
     def __init__(self, config):
         super(__class__, self).__init__(config)
@@ -811,7 +818,7 @@ class ExecutiveSummary(Stage):
     spec = ' --subject_path={path}' \
            ' --output_path={path}/executive_summary'
 
-    expected_outputs = []
+    expected_outputs_spec = []
 
     @property
     def args(self):
