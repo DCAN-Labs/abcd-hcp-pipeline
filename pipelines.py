@@ -6,8 +6,8 @@ import subprocess
 
 import os
 
-from helpers import (get_fmriname, get_readoutdir, get_relpath, get_taskname,
-                     ijk_to_xyz)
+from helpers import (get_fmriname, get_readoutdir, get_relpath,
+                     get_taskname, ijk_to_xyz)
 
 
 class ParameterSettings(object):
@@ -52,7 +52,7 @@ class ParameterSettings(object):
     # final time series isotropic resolution (mm)
     fmrires = 2.0
     # resolution of greyordinates (mm)
-    grayordinateres = 2.0
+    grayordinatesres = 2
     # smoothing sigma for final greyordinate data (mm)
     smoothingFWHM = 2.0
     # surface registration algorithm, one of: FS, MSMSulc
@@ -70,7 +70,7 @@ class ParameterSettings(object):
     subcortgraylabels = "{HCPPIPEDIR_Config}/FreeSurferSubcortical" \
                             "LabelTableLut.txt"
 
-    # @ signal processing defaults @ #
+    # @ bold processing defaults @ #
     # brain radius of subject set
     brain_radius = 50
     # threshold for valid signal regression frames.
@@ -82,8 +82,8 @@ class ParameterSettings(object):
     # motion regressor bandstop filter parameters
     motion_filter_type = 'notch'
     motion_filter_order = 4
-    band_stop_max = None
-    band_stop_min = None
+    band_stop_min = 18.582
+    band_stop_max = 25.7263
     motion_filter_option = 5
     # seconds to omit from beginning of scan
     skip_seconds = 5
@@ -363,10 +363,9 @@ class Stage(object):
                 cmdlist.append((cmd, out_log, err_log))
             with mp.Pool(processes=ncpus) as pool:
                 result = pool.starmap(_call, cmdlist)
-                print(result)    
-                if type(result.returncode) is list:
-                    if all(v == 0 for v in result.returncode):
-                        result.returncode = 0
+                if type(result) is list:
+                    if all(v == 0 for v in result):
+                        result = 0
         else:
             cmd = self.cmdline()
             log_dir = self._get_log_dir()
@@ -488,7 +487,7 @@ class PostFreeSurfer(Stage):
            ' --subject={subject}' \
            ' --surfatlasdir={surfatlasdir}' \
            ' --grayordinatesdir={grayordinatesdir}' \
-           ' --grayordinateres={grayordinateres}' \
+           ' --grayordinatesres={grayordinatesres}' \
            ' --hiresmesh={hiresmesh}' \
            ' --lowresmesh={lowresmesh}' \
            ' --subcortgraylabels={subcortgraylabels}' \
@@ -606,7 +605,7 @@ class FMRISurface(Stage):
            ' --lowresmesh={lowresmesh}' \
            ' --fmrires={fmrires}' \
            ' --smoothingFWHM={smoothingFWHM}' \
-           ' --grayordinateres={grayordinateres}' \
+           ' --grayordinatesres={grayordinatesres}' \
            ' --regname={regname}'
 
     def __init__(self, config):
@@ -630,7 +629,7 @@ class FMRISurface(Stage):
             yield ' '.join((script, argset))
 
 
-class DCANBoldProcessing(Stage):
+class DCANBOLDProcessing(Stage):
 
     script = '{DCANBOLDPROCDIR}/dcan_bold_proc.py'
 
@@ -649,6 +648,9 @@ class DCANBoldProcessing(Stage):
            ' --band-stop-max={band_stop_max}' \
            ' --brain-radius={brain_radius}' \
            ' --skip-seconds={skip_seconds}'
+
+    def __init__(self, config):
+        super(__class__, self).__init__(config)
 
     def set_bandstop_filter(self, lower_bound, upper_bound,
                             filter_type='notch'):
@@ -717,9 +719,8 @@ def _call(cmd, out_log, err_log, num_threads=1):
         env['OMP_NUM_THREADS'] = str(num_threads)
         env['ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS'] = str(num_threads)
     with open(out_log, 'w') as out, open(err_log, 'w') as err:
-        result = subprocess.run(cmd.split(), stdout=out, stderr=err, env=env)
-        print(result.returncode)
-        if type(result.returncode) is list:
-            if all(v == 0 for v in result.returncode):
-                result.returncode = 0
-    return result.returncode
+        result = subprocess.call(cmd.split(), stdout=out, stderr=err, env=env)
+        if type(result) is list:
+            if all(v == 0 for v in result):
+                result = 0
+    return result

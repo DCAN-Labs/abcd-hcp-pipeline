@@ -172,7 +172,13 @@ def get_relpath(filename):
     :param filename: path to bids nifti.
     :return: relative path from the bids subject folder.
     """
-    return '/'.join(filename.split('/')[-3:])
+
+    # assumes a session is present
+    types_dir = os.path.dirname(filename)
+    sessions_dir = os.path.dirname(types_dir)
+    subject_dir = os.path.dirname(sessions_dir)
+
+    return os.path.relpath(filename,subject_dir)
 
 
 def get_fmriname(filename):
