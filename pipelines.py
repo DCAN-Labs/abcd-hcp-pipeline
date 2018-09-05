@@ -12,7 +12,7 @@ from helpers import (get_fmriname, get_readoutdir, get_relpath,
 
 class ParameterSettings(object):
     """
-    Paths to files and settings required to run DCAN HCP.  Class attributes 
+    Paths to files and settings required to run DCAN HCP.  Class attributes
     should be any parameters which are independent of input image parameters,
     for example, the target atlases. Instance attributes are attributes which
     are read from or dependent upon inputs.  Additionally, they may include
@@ -168,11 +168,19 @@ class ParameterSettings(object):
         setattr(self, key, value)
 
     def _params(self):
+        """
+        gets all class parameters which do not start with an underscore.
+        :return: dictionary of class parameter names and values.
+        """
         params = inspect.getmembers(self, lambda a: not inspect.isroutine(a))
         params = {x[0]: x[1] for x in params if not x[0].startswith('_')}
         return params
 
     def _format(self):
+        """
+        formats all class parameter strings to insert environment variables.
+        :return: None
+        """
         params = self._params()
         # format all attributes
         for item, value in params.items():
@@ -181,7 +189,8 @@ class ParameterSettings(object):
 
     def get_params(self):
         """
-        :return: dictionary of config properties, formatted using os.environ.
+        formats and returns instance variables.
+        :return: dictionary of instance variable names and values
         """
         self._format()
         return self._params()
@@ -314,16 +323,62 @@ class Stage(object):
         return string
 
     def _get_log_dir(self):
+        """
+        returns the subject's log directory for this stage
+        :return: path to log directory
+        """
         log_dir = os.path.join(self.kwargs['logs'], self.__class__.__name__)
         if not os.path.isdir(log_dir):
             os.makedirs(log_dir)
         return log_dir
 
+    def check_expected_outputs(self):
+        """
+        checks the existence of the expected outputs for this stage.
+        :return: True if all outputs exist, else False.
+        """
+        outputs = self.get_expected_outputs()
+        checklist = [os.path.isfile(p) for p in outputs]
+        if not all(checklist):
+            print('missing expected outputs from %s' %
+                  self.__class__.__name__)
+            dne_list = [f for i, f in enumerate(outputs) if not checklist[i]]
+            for f in dne_list:
+                print('file not found: %s' % f)
+            return False
+        else:
+            return True
+
+    def remove_expected_outputs(self):
+        """
+        removes expected outputs for this stage if they exist.
+        :return: None
+        """
+        outputs = self.get_expected_outputs()
+        checklist = [os.path.isfile(p) for p in outputs]
+        if any(checklist):
+            print('found outputs from an earlier run of %s' %
+                  self.__class__.__name__)
+            rm_list = [f for i, f in enumerate(outputs) if checklist[i]]
+            for f in rm_list:
+                print('removing %s' % f)
+                os.remove(f)
+
     def setup(self):
+        """
+        runs prior to main script for this stage.
+        :return: None
+        """
         self.status.update_start_run()
 
     def teardown(self, result=0):
-        if type(result) is list and all(v == 0 for v in result):
+        """
+        runs following the main script for this stage
+        :param result: exit status or list of exit statuses for the main
+        script.
+        :return: None
+        """
+        if isinstance(result, list) and all(v == 0 for v in result):
             result = 0
         if result == 0:
             self.status.update_success()
@@ -339,17 +394,57 @@ class Stage(object):
 
     @property
     def args(self):
+        """
+        Formats the command line argument "spec", returning the full string of
+        inputs to the main script.  Must be overridden.
+        :return: string of space separated command line arguments.
+        """
         raise NotImplementedError
 
     @property
     def script(self):
+        """
+        formattable string for the path to the main script.  Must be
+        overridden.
+        """
         raise NotImplementedError
 
+    @property
+    def expected_outputs(self):
+        """
+        expected outputs for this stage.  It should be a list of format
+        strings which point to system paths for subject's files.  Must use
+        variable names like "path" or "subject" as defined in
+        ParameterSettings.  Must be overridden.
+        """
+        raise NotImplementedError
+
+    def get_expected_outputs(self):
+        """
+        formats and returns expected outputs.  Must be overridden for
+        expected outputs of concurrent executions.
+        :return:
+        """
+        expected_outputs = [p.format(**self.kwargs)
+                            for p in self.expected_outputs]
+        return expected_outputs
+
     def cmdline(self):
+        """
+        returns the formatted string for the command to be called.  Must
+        be overridden as a generator object for concurrent execution.
+        :return: command line string.
+        """
         script = self.script.format(**os.environ)
         return ' '.join((script, self.args))
 
     def run(self, ncpus=1):
+        """
+        runs this stage
+        :param ncpus: number of available cores for concurrent execution or
+        for multithreaded computation.
+        :return: None
+        """
         self.setup()
         # a generator cmdline supports parallel execution
         if inspect.isgeneratorfunction(self.cmdline):
@@ -363,9 +458,6 @@ class Stage(object):
                 cmdlist.append((cmd, out_log, err_log))
             with mp.Pool(processes=ncpus) as pool:
                 result = pool.starmap(_call, cmdlist)
-                if type(result) is list:
-                    if all(v == 0 for v in result):
-                        result = 0
         else:
             cmd = self.cmdline()
             log_dir = self._get_log_dir()
@@ -409,6 +501,8 @@ class PreFreeSurfer(Stage):
            ' --topupconfig={topupconfig}' \
            ' --useT2={useT2}' \
            ' --printcom={printcom}'
+
+    expected_outputs = []
 
     def __init__(self, config):
         super(__class__, self).__init__(config)
@@ -474,6 +568,8 @@ class FreeSurfer(Stage):
         self.kwargs['t2_restore'] = os.path.join(
             self.kwargs['freesurferdir'], 'T2w_acpc_dc_restore.nii.gz')
 
+    expected_outputs = []
+
     @property
     def args(self):
         return self.spec.format(**self.kwargs)
@@ -508,6 +604,8 @@ class PostFreeSurfer(Stage):
            ' --template2mmmask={template2mmmask}' \
            ' --printcom={printcom}'
 
+    expected_outputs = []
+
     def __init__(self, config):
         super(__class__, self).__init__(config)
 
@@ -540,6 +638,8 @@ class FMRIVolume(Stage):
            ' --printcom={printcom}' \
            ' --biascorrection={fmribfcmethod}' \
            ' --mctype={mctype}'
+
+    expected_outputs = []
 
     def __init__(self, config):
         super(__class__, self).__init__(config)
@@ -608,6 +708,8 @@ class FMRISurface(Stage):
            ' --grayordinatesres={grayordinatesres}' \
            ' --regname={regname}'
 
+    expected_outputs = []
+
     def __init__(self, config):
         super(__class__, self).__init__(config)
 
@@ -648,6 +750,8 @@ class DCANBOLDProcessing(Stage):
            ' --band-stop-max={band_stop_max}' \
            ' --brain-radius={brain_radius}' \
            ' --skip-seconds={skip_seconds}'
+
+    expected_outputs = []
 
     def __init__(self, config):
         super(__class__, self).__init__(config)
@@ -706,6 +810,8 @@ class ExecutiveSummary(Stage):
 
     spec = ' --subject_path={path}' \
            ' --output_path={path}/executive_summary'
+
+    expected_outputs = []
 
     @property
     def args(self):
