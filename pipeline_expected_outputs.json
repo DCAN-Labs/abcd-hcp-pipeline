@@ -274,9 +274,9 @@
     "{path}/T1w/wmparc.nii.gz",
     "{path}/T1w/wmparc_1mm.nii.gz"
   ],
-  "fMRIVolume": [
+  "FMRIVolume": [
   ],
-  "fMRISurface": [
+  "FMRISurface": [
     "{path}/MNINonLinear/ROIs/Atlas_ROIs.{grayordinatesres}.nii.gz",
     "{path}/MNINonLinear/ROIs/ROIs.{grayordinatesres}.nii.gz"
   ],
