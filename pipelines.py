@@ -508,8 +508,6 @@ class PreFreeSurfer(Stage):
            ' --useT2={useT2}' \
            ' --printcom={printcom}'
 
-    expected_outputs_spec = json.load('file')
-
     def __init__(self, config):
         super(__class__, self).__init__(config)
         # modify t1/t2 inputs for spec
@@ -563,8 +561,6 @@ class FreeSurfer(Stage):
            ' --useT2={useT2}' \
            ' --printcom={printcom}'
 
-    expected_outputs_spec = json.load('file')
-
     def __init__(self, config):
         super(__class__, self).__init__(config)
         self.kwargs['freesurferdir'] = os.path.join(
@@ -610,9 +606,6 @@ class PostFreeSurfer(Stage):
            ' --template2mmmask={template2mmmask}' \
            ' --printcom={printcom}'
 
-    expected_outputs_spec = [
-    ]
-
     def __init__(self, config):
         super(__class__, self).__init__(config)
 
@@ -645,8 +638,6 @@ class FMRIVolume(Stage):
            ' --printcom={printcom}' \
            ' --biascorrection={fmribfcmethod}' \
            ' --mctype={mctype}'
-
-    expected_outputs_spec = []
 
     def __init__(self, config):
         super(__class__, self).__init__(config)
@@ -715,8 +706,6 @@ class FMRISurface(Stage):
            ' --grayordinatesres={grayordinatesres}' \
            ' --regname={regname}'
 
-    expected_outputs_spec = []
-
     def __init__(self, config):
         super(__class__, self).__init__(config)
 
@@ -757,8 +746,6 @@ class DCANBOLDProcessing(Stage):
            ' --band-stop-max={band_stop_max}' \
            ' --brain-radius={brain_radius}' \
            ' --skip-seconds={skip_seconds}'
-
-    expected_outputs_spec = []
 
     def __init__(self, config):
         super(__class__, self).__init__(config)
@@ -817,8 +804,6 @@ class ExecutiveSummary(Stage):
 
     spec = ' --subject_path={path}' \
            ' --output_path={path}/executive_summary'
-
-    expected_outputs_spec = []
 
     @property
     def args(self):
