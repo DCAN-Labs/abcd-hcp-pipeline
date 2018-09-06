@@ -412,6 +412,10 @@ class Stage(object):
             self.status.update_failure(
                 'stage terminated with exit code %s' % result
             )
+        if not self.check_expected_outputs():
+            self.status.update_failure(
+                'stage terminated, some required files were not created.'
+            )
         # @TODO update status in case of missing expected outputs
         # finally, terminate pipeline in case of failure.
         if self.status['node_status'] != Status.states['succeeded']:
