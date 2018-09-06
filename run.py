@@ -18,7 +18,8 @@ def _cli():
     args = parser.parse_args()
 
     return interface(args.bids_dir,  args.output_dir, args.subject_list,
-                     args.collect, args.ncpus, args.stage, args.bandstop)
+                     args.collect, args.ncpus, args.stage, args.bandstop,
+                     args.check_only)
 
 
 def generate_parser(parser=None):
@@ -85,6 +86,9 @@ def generate_parser(parser=None):
              # 'to use physio data from bids, or to use no filter if physio is '
              # 'not available.' @TODO implement physio
     )
+    parser.add_argument('--check-only', action='store_true',
+                        help='checks for the existence of outputs for each '
+                             'stage. Useful for debugging.')
 
     return parser
 
@@ -102,6 +106,7 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
     :param ncpus: number of cores for parallelized processing.
     :param start_stage: start from a given stage.
     :param bandstop_params: tuple of lower and upper bound for stop-band filter
+    :param check_only: check expected outputs for each stage then terminate
     :return:
     """
 
