@@ -77,8 +77,8 @@ class ParameterSettings(object):
     fd_threshold = 0.3
     # bold signal bandpass filter parameters
     filter_order = 2
-    upper_bpf = 0.009
-    lower_bpf = 0.080
+    lower_bpf = 0.009
+    upper_bpf = 0.080
     # motion regressor bandstop filter parameters
     motion_filter_type = 'notch'
     motion_filter_order = 4
