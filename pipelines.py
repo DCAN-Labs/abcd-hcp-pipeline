@@ -783,11 +783,19 @@ class DCANBOLDProcessing(Stage):
         """
         script = self.script.format(**os.environ)
         args = self.spec.format(**self.kwargs)
-        cmdline = ' '.join((script, args))
+        cmd = ' '.join((script, args))
+        cmd += ' --teardown'
+
         bids_tasks = self.config.get_tasks()
         concatlist = []
         for bids_task in bids_tasks:
             concatlist.append(sorted([ 'task-%s%02d' % (bids_task,run) for run in self.config.get_runs(task=bids_task) ]))
+
+        log_dir = self._get_log_dir()
+        out_log = os.path.join(log_dir, self.__class__.__name__ + '.out')
+        err_log = os.path.join(log_dir, self.__class__.__name__ + '.err')
+        result = _call(cmd, out_log, err_log)
+
         super(__class__, self).teardown(result)
 
     @property
