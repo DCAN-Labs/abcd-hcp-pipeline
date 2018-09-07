@@ -36,16 +36,15 @@ export MSMBin=${HCPPIPEDIR}/MSMBinaries
 
 # Set up DCAN Environment Variables
 export MCRROOT=/home/exacloud/lustre1/fnl_lab/code/external/utilities/MATLAB_MCR/v91
-export DCANBOLDPROCDIR=/home/exacloud/lustre1/fnl_lab/code/internal/utilities/DCANSigProc
+export DCANBOLDPROCDIR=/home/exacloud/lustre1/fnl_lab/code/internal/pipelines/dcan_bold_proc
 export EXECSUMDIR=/home/exacloud/lustre1/fnl_lab/code/internal/utilities/executivesummary
 export ANTSPATH=/home/exacloud/lustre1/fnl_lab/code/external/ANTs/antsbin/bin
 export C3DPATH=/home/exacloud/lustre1/fnl_lab/code/external/utilities/c3d-1.1.0-Linux-x86_64/bin
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/exacloud/lustre1/fnl_lab/code/external/utilities/MATLAB_MCR/v91/runtime/glnxa64:/home/exacloud/lustre1/fnl_lab/code/external/utilities/MATLAB_MCR/v91/bin/glnxa64:/home/exacloud/lustre1/fnl_lab/code/external/utilities/MATLAB_MCR/v91/sys/os/glnxa64:/home/exacloud/lustre1/fnl_lab/code/external/utilities/lib64
 export MSMBINDIR=/home/exacloud/lustre1/fnl_lab/code/external/utilities/MSM/homes/ecr05/MSM_HOCR_v2/Centos
 export CARET7DIR=/home/exacloud/lustre1/fnl_lab/code/external/utilities/workbench-1.3.2/bin_rh_linux64
-export WORKBENCHDIR=/home/exacloud/lustre1/fnl_lab/code/external/utilities/workbench-1.3.2/bin_rh_linux64
+export WORKBENCHDIR=${CARET7DIR}
 export OMP_NUM_THREADS=1
 export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
 export TMPDIR=/tmp
 export LANG="en_US.UTF-8"
-
