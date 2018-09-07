@@ -75,7 +75,7 @@ class ParameterSettings(object):
     brain_radius = 50
     # threshold for valid signal regression frames.
     fd_threshold = 0.3
-    # bold signal bandpass filter parameters
+    # bold signal temporal bandpass filter parameters
     filter_order = 2
     lower_bpf = 0.009
     upper_bpf = 0.080
