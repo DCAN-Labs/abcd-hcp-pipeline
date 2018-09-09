@@ -771,8 +771,8 @@ class DCANBOLDProcessing(Stage):
         cmd = ' '.join((script, args))
         cmd += ' --setup'
         log_dir = self._get_log_dir()
-        out_log = os.path.join(log_dir, self.__class__.__name__ + '.out')
-        err_log = os.path.join(log_dir, self.__class__.__name__ + '.err')
+        out_log = os.path.join(log_dir, self.__class__.__name__ + '_setup.out')
+        err_log = os.path.join(log_dir, self.__class__.__name__ + '_setup.err')
         result = _call(cmd, out_log, err_log)
 
     def teardown(self, result=0):
@@ -786,14 +786,11 @@ class DCANBOLDProcessing(Stage):
         cmd = ' '.join((script, args))
         cmd += ' --teardown'
 
-        bids_tasks = self.config.get_tasks()
-        concatlist = []
-        for bids_task in bids_tasks:
-            concatlist.append(sorted([ 'task-%s%02d' % (bids_task,run) for run in self.config.get_runs(task=bids_task) ]))
+        bids_tasks = self.config.get_bids('taskruns')
 
         log_dir = self._get_log_dir()
-        out_log = os.path.join(log_dir, self.__class__.__name__ + '.out')
-        err_log = os.path.join(log_dir, self.__class__.__name__ + '.err')
+        out_log = os.path.join(log_dir, self.__class__.__name__ + '_teardown.out')
+        err_log = os.path.join(log_dir, self.__class__.__name__ + '_teardown.err')
         result = _call(cmd, out_log, err_log)
 
         super(__class__, self).teardown(result)

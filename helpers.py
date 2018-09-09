@@ -102,9 +102,16 @@ def set_functionals(layout, subject, sessions):
     func = layout.get(subject=subject, session=sessions, modality='func',
                       type='bold', extensions='.nii.gz')
     func_metadata = [layout.get_metadata(x.filename) for x in func]
+    tasknames = layout.get_tasks(subject=subject, session=sessions)
+    concatlist = []
+    for bids_task in tasknames:
+        concatlist.append(sorted([ 'task-%s%02d' % (bids_task,run) for run in layout.get_runs(subject=subject, session=sessions,task=bids_task) ]))
+
     spec = {
         'func': [f.filename for f in func],
-        'func_metadata': func_metadata[0]
+        'func_metadata': func_metadata[0],
+        'tasks': tasknames,
+        'taskruns': concatlist
     }
     return spec
 
