@@ -342,7 +342,7 @@ class Stage(object):
         :return: True if all outputs exist, else False.
         """
         outputs = self.get_expected_outputs()
-        checklist = [os.path.isfile(p) for p in outputs]
+        checklist = [os.path.exists(p) for p in outputs]
         if not all(checklist):
             print('missing expected outputs from %s' %
                   self.__class__.__name__)
