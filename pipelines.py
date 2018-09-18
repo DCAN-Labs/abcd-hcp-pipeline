@@ -781,10 +781,17 @@ class DCANBOLDProcessing(Stage):
         :param result:
         :return:
         """
+        fmris = [ get_fmriname(fmri) for fmri in self.config.get_bids('func') ]
+        fmrisets = list(set([ get_taskname(fmri) for fmri in self.config.get_bids('func') ]))
+
         script = self.script.format(**os.environ)
         args = self.spec.format(**self.kwargs)
         cmd = ' '.join((script, args))
         cmd += ' --teardown'
+
+        for fmriset in fmrisets:
+            fmrilist = sorted([ fmri for fmri in fmris if fmriset in fmri ])
+            cmd += ' --tasklist ' + ','.join(fmrilist)
 
         log_dir = self._get_log_dir()
         out_log = os.path.join(log_dir, self.__class__.__name__ + '_teardown.out')
