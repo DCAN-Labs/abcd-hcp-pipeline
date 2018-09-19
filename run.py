@@ -7,6 +7,7 @@ from helpers import read_bids_dataset
 from pipelines import (ParameterSettings, PreFreeSurfer, FreeSurfer,
                        PostFreeSurfer, FMRIVolume, FMRISurface,
                        DCANBOLDProcessing, ExecutiveSummary)
+from extra_pipelines import ABCDTask
 
 
 def _cli():
@@ -19,7 +20,7 @@ def _cli():
 
     return interface(args.bids_dir,  args.output_dir, args.subject_list,
                      args.collect, args.ncpus, args.stage, args.bandstop,
-                     args.check_only)
+                     args.check_only, args.abcd_task)
 
 
 def generate_parser(parser=None):
@@ -31,13 +32,13 @@ def generate_parser(parser=None):
     if not parser:
         parser = argparse.ArgumentParser(
             prog='run.py',
-            description="""The Developmental Cognition and Neuroimaging (DCAN) 
-            lab fMRI Pipeline.  This BIDS application initiates a functional 
-            MRI processing pipeline built upon the Human Connectome Project's 
-            own minimal processing pipelines.  The application requires only a 
-            dataset conformed to the BIDS specification, and little-to-no 
-            additional configuration on the part of the user. BIDS format and 
-            applications are explained in more detail at 
+            description="""The Developmental Cognition and Neuroimaging (DCAN)
+            lab fMRI Pipeline.  This BIDS application initiates a functional
+            MRI processing pipeline built upon the Human Connectome Project's
+            own minimal processing pipelines.  The application requires only a
+            dataset conformed to the BIDS specification, and little-to-no
+            additional configuration on the part of the user. BIDS format and
+            applications are explained in more detail at
             http://bids.neuroimaging.io/
             """
         )
@@ -89,12 +90,16 @@ def generate_parser(parser=None):
     parser.add_argument('--check-only', action='store_true',
                         help='checks for the existence of outputs for each '
                              'stage. Useful for debugging.')
+    parser.add_argument('--abcd-task', action='store_true',
+                        help='runs abcd task data through task fmri analysis, '
+                             'adding this stage to the end')
 
     return parser
 
 
 def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
-              start_stage=None, bandstop_params=None, check_only=False):
+              start_stage=None, bandstop_params=None, check_only=False,
+              run_abcd_task=False):
     """
     main application interface
     :param bids_dir: input bids dataset see "helpers.read_bids_dataset" for
@@ -143,6 +148,13 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
 
         # determine pipeline order
         order = [pre, free, post, vol, surf, boldproc, execsum]
+
+        # add optional pipelines
+        if run_abcd_task:
+            abcdtask = ABCDTask(session_spec)
+            order.append(abcdtask)
+
+
         if start_stage:
             names = [x.__class__.__name__ for x in order]
             assert start_stage in names, \
