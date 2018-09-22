@@ -10,7 +10,7 @@ from helpers import get_fmriname, get_taskname
 class ABCDTask(Stage):
 
     script = '{HCPPIPEDIR}/TaskfMRIAnalysis/TaskfMRIAnalysis.sh'
-    
+
     spec = '--path={path}' \
            '--subject={subject}' \
            '--lvl1tasks={lvl1tasks}' \
@@ -35,7 +35,7 @@ class ABCDTask(Stage):
         self.kwargs['vba'] = 'NO'
         self.kwargs['confound'] = 'censor.txt'
         self.kwargs['temporalfilter'] = 200
-        parcels = ({'NONE': 'NONE'},) #  self.get_parcels()
+        parcels = [('NONE', 'NONE')] #  self.get_parcels()
         task_d = self.get_tasklist()
 
         # construct task fmri permutations
