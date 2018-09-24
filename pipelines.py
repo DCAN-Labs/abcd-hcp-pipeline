@@ -87,6 +87,8 @@ class ParameterSettings(object):
     motion_filter_option = 5
     # seconds to omit from beginning of scan
     skip_seconds = 5
+    # cont frames
+    contiguous_frames = 5
 
     def __init__(self, bids_data, output_directory):
         """
@@ -126,7 +128,7 @@ class ParameterSettings(object):
             self.echospacing = ('%.12f' % self.echospacing).rstrip('0')
             # distortion correction phase encoding direction
             self.seunwarpdir = ijk_to_xyz(
-                self.bids_data['func_metadata']['PhaseEncodingDirection'])
+                self.bids_data['func_metadata']['PhaseEncodingAxis'])
 
             # set unused fmap parameters to none
             self.fmapmag = self.fmapphase = self.fmapgeneralelectric = \
@@ -749,7 +751,8 @@ class DCANBOLDProcessing(Stage):
            ' --band-stop-min={band_stop_min}' \
            ' --band-stop-max={band_stop_max}' \
            ' --brain-radius={brain_radius}' \
-           ' --skip-seconds={skip_seconds}'
+           ' --skip-seconds={skip_seconds}' \
+           ' --contiguous-frames={contiguous_frames}'
 
     def __init__(self, config):
         super(__class__, self).__init__(config)
