@@ -37,7 +37,8 @@ export MSMBin=${HCPPIPEDIR}/MSMBinaries
 # Set up DCAN Environment Variables
 export MCRROOT=/home/exacloud/lustre1/fnl_lab/code/external/utilities/MATLAB_MCR/v91
 export DCANBOLDPROCDIR=/home/exacloud/lustre1/fnl_lab/code/internal/pipelines/dcan_bold_proc_test
-export EXECSUMDIR=/home/exacloud/lustre1/fnl_lab/code/internal/utilities/executivesummary
+export DCANBOLDPROCVER=DCANBOLDProc_v4.0.0
+export EXECSUMDIR=/home/exacloud/lustre1/fnl_lab/code/internal/utilities/executivesummary_bids
 export ANTSPATH=/home/exacloud/lustre1/fnl_lab/code/external/ANTs/antsbin/bin
 export C3DPATH=/home/exacloud/lustre1/fnl_lab/code/external/utilities/c3d-1.1.0-Linux-x86_64/bin
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/exacloud/lustre1/fnl_lab/code/external/utilities/MATLAB_MCR/v91/runtime/glnxa64:/home/exacloud/lustre1/fnl_lab/code/external/utilities/MATLAB_MCR/v91/bin/glnxa64:/home/exacloud/lustre1/fnl_lab/code/external/utilities/MATLAB_MCR/v91/sys/os/glnxa64:/home/exacloud/lustre1/fnl_lab/code/external/utilities/lib64

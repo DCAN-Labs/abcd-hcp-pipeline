@@ -20,6 +20,8 @@ class ParameterSettings(object):
     attributes will be formatted according to the available
     """
 
+    summary_dir = "summary_{DCANBOLDPROCVER}"
+
     # @ templates @ #
     # MNI0.7mm template
     t1template = "{HCPPIPEDIR_Templates}/MNI152_T1_1mm.nii.gz"
@@ -106,6 +108,9 @@ class ParameterSettings(object):
             '%.12f' % self.bids_data['t1w_metadata']['DwellTime']
         self.t1samplespacing = self.t1samplespacing.rstrip('0')
 
+        bids_root = self.t1w[0].split('/')[:-4]
+        self.unproc='/'.join(bids_root)
+
         if 'T2w' in self.bids_data['types']:
             self.useT2 = 'true'
             self.t2w = self.bids_data['t2w']
@@ -159,6 +164,10 @@ class ParameterSettings(object):
         self.path = os.path.join(output_directory, 'files')
         self.logs = os.path.join(output_directory, 'logs')
         self.subject = self.bids_data['subject']
+        self.session = self.bids_data['session']
+
+        deriv_root = self.path.split('/')[:-3]
+        self.deriv = '/'.join(deriv_root)
 
         # print command for HCP
         self.printcom = ''
@@ -817,15 +826,20 @@ class DCANBOLDProcessing(Stage):
 
 class ExecutiveSummary(Stage):
 
-    script = '{EXECSUMDIR}/summary_tools/layout_builder.py'
+    script = '{EXECSUMDIR}/summary_tools/executivesummary_wrapper.sh'
 
-    spec = ' --subject_path={path}' \
-           ' --output_path={path}/executive_summary'
+    spec = ' --unproc_root={unproc}' \
+           ' --deriv_root={deriv}' \
+           ' --subject_id={subject}' \
+           ' --visit={session}' \
+           ' --ex_summ_dir={summary_dir}'
+
+    def __init__(self, config):
+        super(__class__, self).__init__(config)
 
     @property
     def args(self):
         return self.spec.format(**self.kwargs)
-
 
 def _call(cmd, out_log, err_log, num_threads=1):
     env = os.environ.copy()
