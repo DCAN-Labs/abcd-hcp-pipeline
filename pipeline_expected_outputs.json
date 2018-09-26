@@ -281,5 +281,6 @@
     "{path}/MNINonLinear/ROIs/ROIs.{grayordinatesres}.nii.gz"
   ],
   "DCANBOLDProcessing": [],
+  "ABCDTask": [],
   "ExecutiveSummary": []
 }

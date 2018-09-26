@@ -11,21 +11,21 @@ class ABCDTask(Stage):
 
     script = '{HCPPIPEDIR}/TaskfMRIAnalysis/TaskfMRIAnalysis.sh'
     
-    spec = '--path={path}' \
-           '--subject={subject}' \
-           '--lvl1tasks={lvl1tasks}' \
-           '--lvl1fsfs={lvl1fsfs}' \
-           '--lvl2task={lvl2task}' \
-           '--lvl2fsf={lvl2fsf}' \
-           '--lowresmesh={lowresmesh}' \
-           '--grayordinatesres={grayordinatesres}' \
-           '--origsmoothingFWHM={smoothingFWHM}' \
-           '--confound={confound}' \
-           '--finalsmoothingFWHM={finalsmoothingFWHM}' \
-           '--temporalfilter={temporalfilter}' \
-           '--vba={vba}' \
-           '--regname={regname}' \
-           '--parcellation={parcellation}' \
+    spec = '--path={path} ' \
+           '--subject={subject} ' \
+           '--lvl1tasks={lvl1tasks} ' \
+           '--lvl1fsfs={lvl1fsfs} ' \
+           '--lvl2task={lvl2task} ' \
+           '--lvl2fsf={lvl2fsf} ' \
+           '--lowresmesh={lowresmesh} ' \
+           '--grayordinatesres={grayordinatesres} ' \
+           '--origsmoothingFWHM={smoothingFWHM} ' \
+           '--confound={confound} ' \
+           '--finalsmoothingFWHM={finalsmoothingFWHM} ' \
+           '--temporalfilter={temporalfilter} ' \
+           '--vba={vba} ' \
+           '--regname={regname} ' \
+           '--parcellation={parcellation} ' \
            '--parcellationfile={parcellationfile}'
 
     smoothing_list = [2, 5]
@@ -35,12 +35,13 @@ class ABCDTask(Stage):
         self.kwargs['vba'] = 'NO'
         self.kwargs['confound'] = 'censor.txt'
         self.kwargs['temporalfilter'] = 200
-        parcels = ({'NONE': 'NONE'},) #  self.get_parcels()
+        parcels = [('NONE', 'NONE')] #  self.get_parcels()
         task_d = self.get_tasklist()
 
         # construct task fmri permutations
         for parcel, smoothing, task in \
                 product(parcels, self.smoothing_list, list(task_d.items())):
+            self.kwargs['fmriname'] = task[0]
             self.kwargs['parcellation'] = parcel[0]
             self.kwargs['parcellationfile'] = parcel[1]
             self.kwargs['finalsmoothingFWHM'] = smoothing
@@ -48,6 +49,7 @@ class ABCDTask(Stage):
             self.kwargs['lvl1fsfs'] = '@'.join(task[1])
             self.kwargs['lvl2task'] = task[0]
             self.kwargs['lvl2fsf'] = task[0]
+            self.kwargs['regname'] = "NONE"
 
             kw = {k: (v if v is not None else "NONE")
                   for k, v in self.kwargs.items()}
@@ -65,11 +67,13 @@ class ABCDTask(Stage):
         """
         super(__class__, self).setup()
         # construct command line call
-        setup_script = '{ABCDTASKPREPDIR}/tfmri.py' % \
+        setup_script = '%s/tfMRI.py' % \
                        os.environ['ABCDTASKPREPDIR']
         arg1 = self.kwargs['path']
-        arg2 = self.kwargs['subject']
-        cmd = ' '.join((setup_script, arg1, arg2))
+        arg2 = os.environ['SOURCEDATADIR']
+        arg3 = self.kwargs['subject']
+        arg4 = self.kwargs['session']
+        cmd = ' '.join((setup_script, arg1, arg2, arg3, arg4))
 
         log_dir = self._get_log_dir()
         out_log = os.path.join(log_dir, self.__class__.__name__ + '_setup.out')
@@ -101,7 +105,7 @@ class ABCDTask(Stage):
         returns a list of label name, filename pairs for the labels in the
         dcan bold proc folder.
         """
-        parcellation_folder = '{DCANBOLDPROCDIR}/templates/parcellations' % \
+        parcellation_folder = '%s/templates/parcellations' % \
                               os.environ['DCANBOLDPROCDIR']
         walker = list(os.walk(parcellation_folder))
         # find all folders which contain a space subdirectory
@@ -110,7 +114,7 @@ class ABCDTask(Stage):
         parcels = []
         for x in candidates:
             label_name = os.path.basename(os.path.dirname(x[0]))
-            if '%s.32k_fs_LR.dlabel.nii' % label_name in x[1]:
+            if '%s.32k_fs_LR.dlabel.nii' % label_name in x[2]:
                 parcels.append((
                     label_name,
                     os.path.join(

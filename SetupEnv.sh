@@ -38,7 +38,8 @@ export MSMBin=${HCPPIPEDIR}/MSMBinaries
 export MCRROOT=/home/exacloud/lustre1/fnl_lab/code/external/utilities/MATLAB_MCR/v91
 export DCANBOLDPROCDIR=/home/exacloud/lustre1/fnl_lab/code/internal/pipelines/dcan_bold_proc
 export EXECSUMDIR=/home/exacloud/lustre1/fnl_lab/code/internal/utilities/executivesummary
-export ABCDTASKPREPDIR=NOTYETDETERMINED
+export ABCDTASKPREPDIR=/home/exacloud/lustre1/fnl_lab/code/internal/pipelines/HCP_generic_srun/ABCD_tfMRI
+export SOURCEDATADIR=/home/exacloud/lustre1/fnl_lab/data/HCP/sourcedata/ABCD
 
 # binary dependencies
 export ANTSPATH=/home/exacloud/lustre1/fnl_lab/code/external/ANTs/antsbin/bin

@@ -9,7 +9,6 @@ import os
 from helpers import (get_fmriname, get_readoutdir, get_relpath,
                      get_taskname, ijk_to_xyz)
 
-
 class ParameterSettings(object):
     """
     Paths to files and settings required to run DCAN HCP.  Class attributes
@@ -54,7 +53,7 @@ class ParameterSettings(object):
     # resolution of greyordinates (mm)
     grayordinatesres = 2
     # smoothing sigma for final greyordinate data (mm)
-    smoothingFWHM = 2.0
+    smoothingFWHM = 2
     # surface registration algorithm, one of: FS, MSMSulc
     regname = "FS"
     # number of vertices (in thousands) for high and low res surface meshes
@@ -126,7 +125,7 @@ class ParameterSettings(object):
             self.echospacing = ('%.12f' % self.echospacing).rstrip('0')
             # distortion correction phase encoding direction
             self.seunwarpdir = ijk_to_xyz(
-                self.bids_data['func_metadata']['PhaseEncodingDirection'])
+                self.bids_data['func_metadata']['PhaseEncodingAxis'])
 
             # set unused fmap parameters to none
             self.fmapmag = self.fmapphase = self.fmapgeneralelectric = \
@@ -157,6 +156,7 @@ class ParameterSettings(object):
         self.path = os.path.join(output_directory, 'files')
         self.logs = os.path.join(output_directory, 'logs')
         self.subject = self.bids_data['subject']
+        self.session = self.bids_data['session']
 
         # print command for HCP
         self.printcom = ''
@@ -460,6 +460,7 @@ class Stage(object):
         if inspect.isgeneratorfunction(self.cmdline):
             cmdlist = []
             for cmd in self.cmdline():
+                print(cmd)
                 log_dir = self._get_log_dir()
                 out_log = os.path.join(log_dir,
                                        self.kwargs['fmriname'] + '.out')
