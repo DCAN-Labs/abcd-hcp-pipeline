@@ -10,22 +10,23 @@ from helpers import get_fmriname, get_taskname
 class ABCDTask(Stage):
 
     script = '{HCPPIPEDIR}/TaskfMRIAnalysis/TaskfMRIAnalysis.sh'
-    
-    spec = '--path={path} ' \
-           '--subject={subject} ' \
-           '--lvl1tasks={lvl1tasks} ' \
-           '--lvl1fsfs={lvl1fsfs} ' \
-           '--lvl2task={lvl2task} ' \
-           '--lvl2fsf={lvl2fsf} ' \
-           '--lowresmesh={lowresmesh} ' \
-           '--grayordinatesres={grayordinatesres} ' \
-           '--origsmoothingFWHM={smoothingFWHM} ' \
-           '--confound={confound} ' \
-           '--finalsmoothingFWHM={finalsmoothingFWHM} ' \
-           '--temporalfilter={temporalfilter} ' \
-           '--vba={vba} ' \
-           '--regname={regname} ' \
-           '--parcellation={parcellation} ' \
+
+
+    spec = '--path={path}' \
+           '--subject={subject}' \
+           '--lvl1tasks={lvl1tasks}' \
+           '--lvl1fsfs={lvl1fsfs}' \
+           '--lvl2task={lvl2task}' \
+           '--lvl2fsf={lvl2fsf}' \
+           '--lowresmesh={lowresmesh}' \
+           '--grayordinatesres={grayordinatesres}' \
+           '--origsmoothingFWHM={smoothingFWHM}' \
+           '--confound={confound}' \
+           '--finalsmoothingFWHM={finalsmoothingFWHM}' \
+           '--temporalfilter={temporalfilter}' \
+           '--vba={vba}' \
+           '--regname={regname}' \
+           '--parcellation={parcellation}' \
            '--parcellationfile={parcellationfile}'
 
     smoothing_list = [2, 5]
