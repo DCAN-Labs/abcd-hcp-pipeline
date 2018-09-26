@@ -9,7 +9,6 @@ import os
 from helpers import (get_fmriname, get_readoutdir, get_relpath,
                      get_taskname, ijk_to_xyz)
 
-
 class ParameterSettings(object):
     """
     Paths to files and settings required to run DCAN HCP.  Class attributes
@@ -56,7 +55,7 @@ class ParameterSettings(object):
     # resolution of greyordinates (mm)
     grayordinatesres = 2
     # smoothing sigma for final greyordinate data (mm)
-    smoothingFWHM = 2.0
+    smoothingFWHM = 2
     # surface registration algorithm, one of: FS, MSMSulc
     regname = "FS"
     # number of vertices (in thousands) for high and low res surface meshes
@@ -168,6 +167,7 @@ class ParameterSettings(object):
 
         deriv_root = self.path.split('/')[:-3]
         self.deriv = '/'.join(deriv_root)
+
 
         # print command for HCP
         self.printcom = ''
@@ -471,6 +471,7 @@ class Stage(object):
         if inspect.isgeneratorfunction(self.cmdline):
             cmdlist = []
             for cmd in self.cmdline():
+                print(cmd)
                 log_dir = self._get_log_dir()
                 out_log = os.path.join(log_dir,
                                        self.kwargs['fmriname'] + '.out')
