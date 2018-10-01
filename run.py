@@ -1,5 +1,16 @@
 #! /usr/bin/env python3
 
+__doc__ = """The Developmental Cognition and Neuroimaging (DCAN)
+             lab fMRI Pipeline.  This BIDS application initiates a functional
+             MRI processing pipeline built upon the Human Connectome Project's
+             own minimal processing pipelines.  The application requires only a
+             dataset conformed to the BIDS specification, and little-to-no
+             additional configuration on the part of the user. BIDS format and
+             applications are explained in more detail at
+             http://bids.neuroimaging.io/
+           """
+__version__ = "1.0.0"
+
 import argparse
 import os
 
@@ -32,15 +43,7 @@ def generate_parser(parser=None):
     if not parser:
         parser = argparse.ArgumentParser(
             prog='run.py',
-            description="""The Developmental Cognition and Neuroimaging (DCAN)
-            lab fMRI Pipeline.  This BIDS application initiates a functional
-            MRI processing pipeline built upon the Human Connectome Project's
-            own minimal processing pipelines.  The application requires only a
-            dataset conformed to the BIDS specification, and little-to-no
-            additional configuration on the part of the user. BIDS format and
-            applications are explained in more detail at
-            http://bids.neuroimaging.io/
-            """
+            description=__doc__
         )
     parser.add_argument(
         'bids_dir',
