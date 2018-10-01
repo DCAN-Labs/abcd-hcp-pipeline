@@ -8,7 +8,10 @@ to run the subject(s).
 
 ```{bash}
 # clone the repository
+# SSH:
 git clone git@gitlab.com:Fair_lab/bidsapp.git
+# HTTPS:
+git clone https://gitlab.com/Fair_lab/bidsapp.git
 
 # change directory into the repository's folder
 cd bidsapp
@@ -31,19 +34,23 @@ docker run --rm \
 Usage:
 
 ```{bash}
+run.py <bids_dir> <output_dir> [OPTIONS]
+
 positional arguments:
   bids_dir              path to the input bids dataset root directory. Read
                         more about bids format in the link above. It is
                         recommended to use the dcan bids gui or dcm2bids to
                         convert from participant dicoms.
   output_dir            path to the output directory for all intermediate and
-                        output files from the pipeline.
+                        output files from the pipeline, also path in which
+                        logs are stored.
 
 optional arguments:
   -h, --help            show this help message and exit
   --participant-label ID [ID ...]
                         optional list of participant ids to run. Default is
-                        all ids found under the bids input directory.
+                        all ids found under the bids input directory. A
+                        participant label does not include "sub-"
   --all-sessions        collapses all sessions into one when running a
                         subject.
   --ncpus NCPUS         number of cores to use for concurrent processing and
@@ -51,22 +58,27 @@ optional arguments:
                         FreeSurfer to produce non-deterministic results.
   --stage STAGE         begin from a given stage, continuing through. Options:
                         PreFreeSurfer, FreeSurfer, PostFreeSurfer, FMRIVolume,
-                        FMRISurface, DCANBoldProcessing, ExecutiveSummary
+                        FMRISurface, DCANBOLDProcessing, ExecutiveSummary
   --bandstop LOWER UPPER
-                        parameters for motion regressor band-stop filter.
-                        It is recommended for the boundaries to match the
-                        inter-quartile range for participant group heart rate
-                        (bpm) or to match bids physio data directly. These
+                        parameters for motion regressor band-stop filter. It
+                        is recommended for the boundaries to match the inter-
+                        quartile range for participant group heart rate (bpm),
+                        or to match bids physio data directly. These
                         parameters are only recommended for data acquired with
                         a frequency of approx. 1 Hz or more. Default is no
-                        filter.
+                        filter
+  --check-only          checks for the existence of outputs for each stage.
+                        Useful for debugging.
+  --abcd-task           runs abcd task data through task fmri analysis, adding
+                        this stage to the end
 ```
 
 #### Additional Configuration:
 
 Temporary/Scratch space:  If you need to make use of a particular mount
 for fast file io, you can provide the docker command with an additional
-volume mount: `docker run -v /my/fast/file/mnt:/tmp`
+volume mount: `docker run -v /my/fast/file/mnt:/tmp` on most systems, 
+you can add an argument to docker: `docker run --tmpfs /tmp`
 
 software will use spin echo field maps if they are present, then
 gradient field maps, then None, consistent with best observed
@@ -86,6 +98,10 @@ subject respiratory rate.
 
 #### Some current limitations:
 
+diffusion field maps are still a work in progress, as this data differs
+significantly between scanner makes. We will happily add new formats to 
+the pipeline, so please post an issue if you run into fieldmap trouble.
+
 The ideal motion filtering parameters have not been robustly tested
 across repetition times or populations outside of adolescents.
 Additionally, automatic reading of physio data from bids format has not
@@ -96,6 +112,3 @@ a single modality (e.g. different phase encoding direction for 2 fmri).
 Other parameters would have to be processed by creating separate bids
 datasets for sessions with varied fmri parameters.
 
-user must ensure that PhaseEncodingDirection is properly set in both
-spin echo field map and functional data, as dcm2bids does not always
-get this right.
