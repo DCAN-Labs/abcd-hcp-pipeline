@@ -159,6 +159,11 @@ class ParameterSettings(object):
         # @TODO handle bids formatted physio data
         self.physio = None
 
+        # intermediate template defaults
+        self.use_study_template = "false"
+        self.study_template = None
+        self.study_template_brain = None
+
         # @ output files @ #
         self.path = os.path.join(output_directory, 'files')
         self.logs = os.path.join(output_directory, 'logs')
@@ -217,6 +222,17 @@ class ParameterSettings(object):
         for arg in args:
             val = val[arg]
         return val
+
+    def set_study_template(self, study_template, study_template_brain):
+        """
+        set template for intermediate registration steps.
+        :param study_template: intermediate registration template head.
+        :param study_template_brain: intermediate registration template brain.
+        :return: None
+        """
+        self.use_study_template = "true"
+        self.study_template = study_template
+        self.study_template_brain = study_template_brain
 
 
 class Status(object):
@@ -522,7 +538,10 @@ class PreFreeSurfer(Stage):
            ' --avgrdcmethod={dcmethod}' \
            ' --topupconfig={topupconfig}' \
            ' --useT2={useT2}' \
-           ' --printcom={printcom}'
+           ' --printcom={printcom}' \
+           ' --useStudyTemplate={usestudytemplate}' \
+           ' --StudyTemplate={studytemplate}' \
+           ' --StudyTemplateBrain={studytemplatebrain}'
 
     def __init__(self, config):
         super(__class__, self).__init__(config)
