@@ -31,7 +31,7 @@ def _cli():
 
     return interface(args.bids_dir,  args.output_dir, args.subject_list,
                      args.collect, args.ncpus, args.stage, args.bandstop,
-                     args.check_only, args.abcd_task)
+                     args.check_only, args.abcd_task, args.study_template)
 
 
 def generate_parser(parser=None):
@@ -96,13 +96,19 @@ def generate_parser(parser=None):
     parser.add_argument('--abcd-task', action='store_true',
                         help='runs abcd task data through task fmri analysis, '
                              'adding this stage to the end')
+    parser.add_argument(
+        '--study-template', nargs=2, metavar=('HEAD', 'BRAIN')
+        help='template head and brain images for intermediate registration, '
+             'effective where population differs greatly from average adult, '
+             'e.g. in elderly populations with large ventricles.'
+    )
 
     return parser
 
 
 def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
               start_stage=None, bandstop_params=None, check_only=False,
-              run_abcd_task=False):
+              run_abcd_task=False, study_template=None):
     """
     main application interface
     :param bids_dir: input bids dataset see "helpers.read_bids_dataset" for
@@ -135,6 +141,10 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
             'ses-%s' % session['session']
         )
         session_spec = ParameterSettings(session, out_dir)
+
+        # set intermediate template if specified
+        if study_template is not None:
+            session_spec.set_study_template(*study_template)
 
         # create pipelines
         pre = PreFreeSurfer(session_spec)
