@@ -132,7 +132,7 @@ class ParameterSettings(object):
             self.echospacing = ('%.12f' % self.echospacing).rstrip('0')
             # distortion correction phase encoding direction
             self.seunwarpdir = ijk_to_xyz(
-                self.bids_data['func_metadata']['PhaseEncodingAxis'])
+                self.bids_data['func_metadata']['PhaseEncodingDirection'])
 
             # set unused fmap parameters to none
             self.fmapmag = self.fmapphase = self.fmapgeneralelectric = \
