@@ -230,9 +230,9 @@ class ParameterSettings(object):
         :param study_template_brain: intermediate registration template brain.
         :return: None
         """
-        self.use_study_template = "true"
-        self.study_template = study_template
-        self.study_template_brain = study_template_brain
+        self.usestudytemplate = "true"
+        self.studytemplate = study_template
+        self.studytemplatebrain = study_template_brain
 
 
 class Status(object):
@@ -551,6 +551,8 @@ class PreFreeSurfer(Stage):
         if self.kwargs['dcmethod'] == 'TOPUP':
             self.kwargs['sephasepos'], self.kwargs['sephaseneg'] = \
                 self._get_intended_sefmaps()
+        else:
+            self.kwargs['sephasepos'] = self.kwargs['sephaseneg'] = None
 
     def _get_intended_sefmaps(self):
         """
@@ -717,6 +719,8 @@ class FMRIVolume(Stage):
             if self.kwargs['dcmethod'] == 'TOPUP':
                 self.kwargs['sephasepos'], self.kwargs['sephaseneg'] = \
                     self._get_intended_sefmaps()
+            else:
+                self.kwargs['sephasepos'] = self.kwargs['sephaseneg'] = None
             # None to NONE
             kw = {k: (v if v is not None else "NONE")
                   for k, v in self.kwargs.items()}

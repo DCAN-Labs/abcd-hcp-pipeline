@@ -97,7 +97,7 @@ def generate_parser(parser=None):
                         help='runs abcd task data through task fmri analysis, '
                              'adding this stage to the end')
     parser.add_argument(
-        '--study-template', nargs=2, metavar=('HEAD', 'BRAIN')
+        '--study-template', nargs=2, metavar=('HEAD', 'BRAIN'),
         help='template head and brain images for intermediate registration, '
              'effective where population differs greatly from average adult, '
              'e.g. in elderly populations with large ventricles.'

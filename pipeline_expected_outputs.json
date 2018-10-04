@@ -136,12 +136,7 @@
     "{path}/MNINonLinear/Native/{subject}.native.wb.spec",
     "{path}/MNINonLinear/Native/{subject}.sulc.native.dscalar.nii",
     "{path}/MNINonLinear/Native/{subject}.thickness.native.dscalar.nii",
-    "{path}/MNINonLinear/ROIs/Atlas_ROIs.*.nii.gz",
-    "{path}/MNINonLinear/ROIs/Atlas_wmparc.*.nii.gz",
-    "{path}/MNINonLinear/ROIs/ROIs.*.nii.gz",
-    "{path}/MNINonLinear/ROIs/wmparc.*.nii.gz",
     "{path}/MNINonLinear/T1w.nii.gz",
-    "{path}/MNINonLinear/T1w_restore.*.nii.gz",
     "{path}/MNINonLinear/T1w_restore.nii.gz",
     "{path}/MNINonLinear/T1w_restore_brain.nii.gz",
     "{path}/MNINonLinear/aparc+aseg.nii.gz",
@@ -250,9 +245,6 @@
     "{path}/T1w/Native/{subject}.R.very_inflated.native.surf.gii",
     "{path}/T1w/Native/{subject}.R.white.native.surf.gii",
     "{path}/T1w/Native/{subject}.native.wb.spec",
-    "{path}/T1w/T1w_acpc_dc.nii.gz",
-    "{path}/T1w/T1w_acpc_dc_restore.nii.gz",
-    "{path}/T1w/T1w_acpc_dc_restore_brain.nii.gz",
     "{path}/T1w/aparc+aseg.nii.gz",
     "{path}/T1w/aparc+aseg_1mm.nii.gz",
     "{path}/T1w/aparc.a2009s+aseg.nii.gz",
@@ -276,10 +268,7 @@
   ],
   "FMRIVolume": [
   ],
-  "FMRISurface": [
-    "{path}/MNINonLinear/ROIs/Atlas_ROIs.{grayordinatesres}.nii.gz",
-    "{path}/MNINonLinear/ROIs/ROIs.{grayordinatesres}.nii.gz"
-  ],
+  "FMRISurface": [],
   "DCANBOLDProcessing": [],
   "ABCDTask": [],
   "ExecutiveSummary": []

@@ -49,7 +49,7 @@ def read_bids_dataset(bids_input, subject_list=None, collect_on_subject=False):
     for s in subjects:
         sessions = layout.get_sessions(subject=s)
         if not sessions:
-            subsess += [(s, 'session')]
+            subsess += [(s, None)]
         elif collect_on_subject:
             subsess += [(s, sessions)]
         else:
@@ -67,7 +67,7 @@ def read_bids_dataset(bids_input, subject_list=None, collect_on_subject=False):
 
         bids_data = {
             'subject': subject,
-            'session': sessions if not collect_on_subject else 'session',
+            'session': sessions if not collect_on_subject else None,
             'types': layout.get(subject=subject, session=sessions,
                                 target='type', return_type='id')
         }
