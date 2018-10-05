@@ -83,8 +83,8 @@ class ParameterSettings(object):
     # motion regressor bandstop filter parameters
     motion_filter_type = 'notch'
     motion_filter_order = 4
-    band_stop_min = 18.582
-    band_stop_max = 25.7263
+    band_stop_min = None
+    band_stop_max = None
     motion_filter_option = 5
     # seconds to omit from beginning of scan
     skip_seconds = 5
