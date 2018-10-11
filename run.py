@@ -9,7 +9,7 @@ __doc__ = """The Developmental Cognition and Neuroimaging (DCAN)
              applications are explained in more detail at
              http://bids.neuroimaging.io/
            """
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 import argparse
 import os
