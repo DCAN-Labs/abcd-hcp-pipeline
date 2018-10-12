@@ -1,15 +1,15 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
 
 __doc__ = """The Developmental Cognition and Neuroimaging (DCAN)
              lab fMRI Pipeline.  This BIDS application initiates a functional
              MRI processing pipeline built upon the Human Connectome Project's
-             own minimal processing pipelines.  The application requires only a
+             minimal processing pipelines.  The application requires only a
              dataset conformed to the BIDS specification, and little-to-no
              additional configuration on the part of the user. BIDS format and
-             applications are explained in more detail at
+             applications are explained in detail at
              http://bids.neuroimaging.io/
            """
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 import argparse
 import os
@@ -48,9 +48,9 @@ def generate_parser(parser=None):
     parser.add_argument(
         'bids_dir',
         help='path to the input bids dataset root directory.  Read more '
-             'about bids format in the link above.  It is recommended to use '
-             'the dcan bids gui or dcm2bids to convert from participant '
-             'dicoms.'
+             'about bids format in the link in the description.  It is '
+             'recommended to use the dcan bids gui or dcm2bids to convert '
+             'from participant dicoms to bids.'
     )
     parser.add_argument(
         'output_dir',
@@ -87,16 +87,23 @@ def generate_parser(parser=None):
              'data directly.  These parameters are only recommended for data '
              'acquired with a frequency of approx. 1 Hz or more.  Default is '
              'no filter'
-             # 'to use physio data from bids, or to use no filter if physio is '
-             # 'not available.' @TODO implement physio
     )
-    parser.add_argument('--check-only', action='store_true',
-                        help='checks for the existence of outputs for each '
-                             'stage. Useful for debugging.')
-    parser.add_argument('--abcd-task', action='store_true',
-                        help='runs abcd task data through task fmri analysis, '
-                             'adding this stage to the end')
     parser.add_argument(
+        '--check-only', action='store_true',
+        help='checks for the existence of outputs for each stage. Useful for '
+             'debugging.'
+    )
+    extras = parser.add_argument_group(
+        'special pipeline options',
+        description='options which pertain to an alternative pipeline or an '
+                    'extra stage which is not inferred from the bids data.'
+    )
+    extras.add_argument(
+        '--abcd-task', action='store_true',
+        help='runs abcd task data through task fmri analysis, adding this '
+             'stage to the end'
+    )
+    extras.add_argument(
         '--study-template', nargs=2, metavar=('HEAD', 'BRAIN'),
         help='template head and brain images for intermediate registration, '
              'effective where population differs greatly from average adult, '
