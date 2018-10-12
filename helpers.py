@@ -3,7 +3,7 @@ import re
 
 from itertools import product
 
-from bids.grabbids import BIDSLayout
+from bids.layout import BIDSLayout
 
 
 def read_bids_dataset(bids_input, subject_list=None, collect_on_subject=False):
