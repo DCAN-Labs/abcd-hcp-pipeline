@@ -104,7 +104,7 @@ def generate_parser(parser=None):
         help='parameters for motion regressor band-stop filter. It is '
              'recommended for the boundaries to match the inter-quartile '
              'range for participant group respiratory rate (bpm), or to match '
-             'bids physio data directly.  These parameters are highly '
+             'bids physio data directly [3].  These parameters are highly '
              'recommended for data acquired with a frequency of approx. 1 Hz '
              'or more (TR<=1.0). Default is no filter'
     )
@@ -121,13 +121,16 @@ def generate_parser(parser=None):
     extras.add_argument(
         '--abcd-task', action='store_true',
         help='runs abcd task data through task fmri analysis, adding this '
-             'stage to the end'
+             'stage to the end. Warning: Not written for general use: a '
+             'general task analysis module will be included in a future '
+             'release.' 
     )
     extras.add_argument(
         '--study-template', nargs=2, metavar=('HEAD', 'BRAIN'),
-        help='template head and brain images for intermediate registration, '
-             'effective where population differs greatly from average adult, '
-             'e.g. in elderly populations with large ventricles.'
+        help='template head and brain images for intermediate nonlinear '
+             'registration, effective where population differs greatly from '
+             'average adult, e.g. in elderly populations with large '
+             'ventricles.'
     )
 
     return parser
