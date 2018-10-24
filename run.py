@@ -1,14 +1,29 @@
 #!/usr/bin/env python3
 
-__doc__ = """The Developmental Cognition and Neuroimaging (DCAN)
-             lab fMRI Pipeline.  This BIDS application initiates a functional
-             MRI processing pipeline built upon the Human Connectome Project's
-             minimal processing pipelines.  The application requires only a
-             dataset conformed to the BIDS specification, and little-to-no
-             additional configuration on the part of the user. BIDS format and
-             applications are explained in detail at
-             http://bids.neuroimaging.io/
-           """
+__doc__ = \
+"""The Developmental Cognition and Neuroimaging (DCAN) lab fMRI Pipeline [1].  
+This BIDS application initiates a functional MRI processing pipeline built 
+upon the Human Connectome Project's minimal processing pipelines [2].  The 
+application requires only a dataset conformed to the BIDS specification, and 
+little-to-no additional configuration on the part of the user. BIDS format 
+and applications are explained in detail at http://bids.neuroimaging.io/
+"""
+__references__ = \
+"""References
+----------
+[1] dcan-pipelines (for now, please cite [3] in use of this software)
+[2] Glasser, MF. et al. The minimal preprocessing pipelines for the Human 
+Connectome Project. Neuroimage. 2013 Oct 15;80:105-24. 
+10.1016/j.neuroimage.2013.04.127
+[3] Fair, D. et al. Correction of respiratory artifacts in MRI head motion 
+estimates. Biorxiv. 2018 June 7. doi: https://doi.org/10.1101/337360
+[4] Dale, A.M., Fischl, B., Sereno, M.I., 1999. Cortical surface-based 
+analysis. I. Segmentation and surface reconstruction. Neuroimage 9, 179-194.
+[5] M. Jenkinson, C.F. Beckmann, T.E. Behrens, M.W. Woolrich, S.M. Smith. FSL. 
+NeuroImage, 62:782-90, 2012
+[6] Avants, BB et al. The Insight ToolKit image registration framework. Front 
+Neuroinform. 2014 Apr 28;8:44. doi: 10.3389/fninf.2014.00044. eCollection 2014. 
+"""
 __version__ = "1.0.1"
 
 import argparse
@@ -42,8 +57,10 @@ def generate_parser(parser=None):
     """
     if not parser:
         parser = argparse.ArgumentParser(
-            prog='run.py',
-            description=__doc__
+            prog='dcan-pipelines',
+            description=__doc__,
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            epilog=__references__
         )
     parser.add_argument(
         'bids_dir',
@@ -56,6 +73,9 @@ def generate_parser(parser=None):
         'output_dir',
         help='path to the output directory for all intermediate and output '
              'files from the pipeline, also path in which logs are stored.'
+    )
+    parser.add_argument(
+        '--version', '-v', action='version', version='%(prog)s ' + __version__
     )
     parser.add_argument(
         '--participant-label', dest='subject_list', metavar='ID', nargs='+',
@@ -82,11 +102,11 @@ def generate_parser(parser=None):
     parser.add_argument(
         '--bandstop', type=float, nargs=2, metavar=('LOWER', 'UPPER'),
         help='parameters for motion regressor band-stop filter. It is '
-             'recommended for the boundaries to match the inter-quartile range '
-             'for participant group heart rate (bpm), or to match bids physio '
-             'data directly.  These parameters are only recommended for data '
-             'acquired with a frequency of approx. 1 Hz or more.  Default is '
-             'no filter'
+             'recommended for the boundaries to match the inter-quartile '
+             'range for participant group respiratory rate (bpm), or to match '
+             'bids physio data directly.  These parameters are highly '
+             'recommended for data acquired with a frequency of approx. 1 Hz '
+             'or more (TR<=1.0). Default is no filter'
     )
     parser.add_argument(
         '--check-only', action='store_true',
@@ -96,7 +116,7 @@ def generate_parser(parser=None):
     extras = parser.add_argument_group(
         'special pipeline options',
         description='options which pertain to an alternative pipeline or an '
-                    'extra stage which is not inferred from the bids data.'
+                    'extra stage which is not\n inferred from the bids data.'
     )
     extras.add_argument(
         '--abcd-task', action='store_true',
@@ -200,3 +220,4 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
 
 if __name__ == '__main__':
     _cli()
+
