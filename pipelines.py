@@ -160,9 +160,9 @@ class ParameterSettings(object):
         self.physio = None
 
         # intermediate template defaults
-        self.use_study_template = "false"
-        self.study_template = None
-        self.study_template_brain = None
+        self.usestudytemplate = "false"
+        self.studytemplate = None
+        self.studytemplatebrain = None
 
         # @ output files @ #
         self.path = os.path.join(output_directory, 'files')
