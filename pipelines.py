@@ -57,7 +57,7 @@ class ParameterSettings(object):
     # smoothing sigma for final greyordinate data (mm)
     smoothingFWHM = 2
     # surface registration algorithm, one of: FS, MSMSulc
-    regname = "FS"
+    regname = "MSMSulc"
     # number of vertices (in thousands) for high and low res surface meshes
     hiresmesh = "164"
     lowresmesh = "32"
