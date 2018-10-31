@@ -1,13 +1,13 @@
 import inspect
 import json
 import multiprocessing as mp
-import re
 import subprocess
 
 import os
 
-from helpers import (get_fmriname, get_readoutdir, get_relpath,
-                     get_taskname, ijk_to_xyz)
+from helpers import (get_fmriname, get_readoutdir, get_relpath, get_taskname,
+                     ijk_to_xyz)
+
 
 class ParameterSettings(object):
     """
@@ -600,22 +600,25 @@ class PreFreeSurfer(Stage):
         includes the substring "T1w" in a spin echo sidecar name.
         :return: pair of spin echos, parallel
         """
-        if '-' in self.kwargs['seunwarpdir']:
-            parallel = 'negative'
-        else:
-            parallel = 'positive'
 
-        for idx, sefm in enumerate(self.config.get_bids('fmap_metadata',
-                                                     parallel)):
-            intended_targets = sefm.get('IntendedFor', [])
-            if 'T1w' in ' '.join(intended_targets):
-                intended_idx = idx
-                break
+        intended_idx = {}
+        for direction in ['positive', 'negative']:
+            for idx, sefm in enumerate(self.config.get_bids('fmap_metadata',
+                                                        'positive')):
+                intended_targets = sefm.get('IntendedFor', [])
+                if 'T1w' in ' '.join(intended_targets):
+                    intended_idx[direction] = idx
+                    break
             else:
-                intended_idx = 0
+                if idx != 1:
+                    print('WARNING: the intended %s spin echo for anatomical '
+                          'distortion correction is not explicitly defined in '
+                          'the sidecar json.' % direction)
+                intended_idx[direction] = 0
 
-        return self.config.get_bids('fmap', 'positive', intended_idx), \
-            self.config.get_bids('fmap', 'negative', intended_idx)
+        return self.config.get_bids('fmap', 'positive', intended_idx[
+            'positive']), \
+            self.config.get_bids('fmap', 'negative', intended_idx['negative'])
 
     @property
     def args(self):
@@ -730,23 +733,26 @@ class FMRIVolume(Stage):
         appropriate field map pair, else give the first spin echo pair.
         :return: pair of spin echo filenames, positive then negative
         """
-        if '-' in self.kwargs['seunwarpdir']:
-            parallel = 'negative'
-        else:
-            parallel = 'positive'
-
-        for idx, sefm in enumerate(self.config.get_bids('fmap_metadata',
-                                                     parallel)):
-            intended_targets = sefm.get('IntendedFor', [])
-            if get_relpath(self.kwargs['fmritcs']) in ' '.join(
-                    intended_targets):
-                intended_idx = idx
-                break
+        intended_idx = {}
+        for direction in ['positive', 'negative']:
+            for idx, sefm in enumerate(self.config.get_bids('fmap_metadata',
+                                                            'positive')):
+                intended_targets = sefm.get('IntendedFor', [])
+                if get_relpath(self.kwargs['fmritcs']) in ' '.join(
+                        intended_targets):
+                    intended_idx[direction] = idx
+                    break
             else:
-                intended_idx = 0
+                if idx != 1:
+                    print('WARNING: the intended %s spin echo for anatomical '
+                          'distortion correction is not explicitly defined in '
+                          'the sidecar json.' % direction)
+                intended_idx[direction] = 0
 
-        return self.config.get_bids('fmap', 'positive', intended_idx), \
-            self.config.get_bids('fmap', 'negative', intended_idx)
+        return self.config.get_bids('fmap', 'positive', intended_idx[
+            'positive']), \
+               self.config.get_bids('fmap', 'negative',
+                                    intended_idx['negative'])
 
     @property
     def args(self):
@@ -856,8 +862,9 @@ class DCANBOLDProcessing(Stage):
         :param result:
         :return:
         """
-        fmris = [ get_fmriname(fmri) for fmri in self.config.get_bids('func') ]
-        fmrisets = list(set([ get_taskname(fmri) for fmri in self.config.get_bids('func') ]))
+        fmris = [get_fmriname(fmri) for fmri in self.config.get_bids('func')]
+        fmrisets = list(set([get_taskname(fmri)
+                              for fmri in self.config.get_bids('func')]))
 
         script = self.script.format(**os.environ)
         args = self.spec.format(**self.kwargs)
@@ -903,6 +910,7 @@ class ExecutiveSummary(Stage):
     @property
     def args(self):
         return self.spec.format(**self.kwargs)
+
 
 def _call(cmd, out_log, err_log, num_threads=1):
     env = os.environ.copy()
