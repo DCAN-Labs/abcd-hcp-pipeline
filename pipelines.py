@@ -150,6 +150,10 @@ class ParameterSettings(object):
         if not hasattr(self, 'fmribfcmethod'):
             self.fmribfcmethod = None
 
+        # dwi parameters
+        if self.get_bids('dwi'):
+            pass
+
         # @TODO handle bids formatted physio data
         self.physio = None
 
@@ -894,6 +898,25 @@ class DCANBOLDProcessing(Stage):
         script = self.script.format(**os.environ)
         for argset in self.args:
             yield ' '.join((script, argset))
+
+class DiffusionPreprocessing(Stage):
+
+    script = '{HCPPIPEDIR}/DiffusionPreprocessing/DiffPreprocPipeline.sh'
+
+    spec = ' --path={path}' \
+           ' --subject={subject}' \
+           ' --posData={dwi_positive}' \
+           ' --negData={dwi_negative}' \
+           ' --echospacing={dwi_echospacing}' \
+           ' --PEdir={pedir}' \
+           ' --printcom={printcom}'
+
+    @property
+    def args(self):
+        pass
+
+    def cmdline(self):
+        pass
 
 
 class ExecutiveSummary(Stage):
