@@ -334,6 +334,12 @@ class Stage(object):
     run: not intended for override.
     """
 
+    # runtime settings
+    call_active = True
+    check_expected_outputs_active = True
+    remove_expected_outputs_active = True
+    ignore_expected_outputs = False
+
     def __init__(self, config):
         self.config = config
         self.kwargs = config.get_params()
@@ -353,6 +359,25 @@ class Stage(object):
             string = ' \\\n    '.join(cmdline.split())
         return string
 
+    @classmethod
+    def deactivate_runtime_calls(cls):
+        """
+        prevents Stage(s) from executing subprocesses
+        """
+        cls.call_active = False
+
+    @classmethod
+    def deactivate_check_expected_outputs(cls):
+        cls.check_expected_outputs_active = False
+
+    @classmethod
+    def deactivate_remove_expected_outputs(cls):
+        cls.remove_expected_outputs_active = False
+
+    @classmethod
+    def activate_ignore_expected_outputs(cls):
+        cls.ignore_expected_outputs = True
+
     def _get_log_dir(self):
         """
         returns the subject's log directory for this stage
@@ -368,6 +393,9 @@ class Stage(object):
         checks the existence of the expected outputs for this stage.
         :return: True if all outputs exist, else False.
         """
+        if not self.check_expected_outputs_active:
+            return True
+
         outputs = self.get_expected_outputs()
         checklist = [os.path.exists(p) for p in outputs]
         if not all(checklist):
@@ -376,7 +404,8 @@ class Stage(object):
             dne_list = [f for i, f in enumerate(outputs) if not checklist[i]]
             for f in dne_list:
                 print('file not found: %s' % f)
-            return False
+            if self.ignore_expected_outputs:
+                return False
 
         return True
 
@@ -406,6 +435,8 @@ class Stage(object):
         removes expected outputs for this stage if they exist.
         :return: None
         """
+        if not self.remove_expected_outputs:
+            return
         outputs = self.get_expected_outputs()
         checklist = [os.path.isfile(p) for p in outputs]
         if any(checklist):
@@ -487,7 +518,6 @@ class Stage(object):
         if inspect.isgeneratorfunction(self.cmdline):
             cmdlist = []
             for cmd in self.cmdline():
-                print(cmd)
                 log_dir = self._get_log_dir()
                 out_log = os.path.join(log_dir,
                                        self.kwargs['fmriname'] + '.out')
@@ -495,14 +525,23 @@ class Stage(object):
                                        self.kwargs['fmriname'] + '.err')
                 cmdlist.append((cmd, out_log, err_log))
             with mp.Pool(processes=ncpus) as pool:
-                result = pool.starmap(_call, cmdlist)
+                result = pool.starmap(self.call, cmdlist)
         else:
             cmd = self.cmdline()
             log_dir = self._get_log_dir()
             out_log = os.path.join(log_dir, self.__class__.__name__ + '.out')
             err_log = os.path.join(log_dir, self.__class__.__name__ + '.err')
-            result = _call(cmd, out_log, err_log, num_threads=ncpus)
+            result = self.call(cmd, out_log, err_log, num_threads=ncpus)
         self.teardown(result)
+
+    def call(self, *args, **kwargs):
+        """
+        runs command if call is active.
+        """
+        if self.call_active:
+            return _call(*args, **kwargs)
+        else:
+            return 0  # "success"
 
 
 class PreFreeSurfer(Stage):
@@ -809,7 +848,7 @@ class DCANBOLDProcessing(Stage):
         log_dir = self._get_log_dir()
         out_log = os.path.join(log_dir, self.__class__.__name__ + '_setup.out')
         err_log = os.path.join(log_dir, self.__class__.__name__ + '_setup.err')
-        result = _call(cmd, out_log, err_log)
+        result = self.call(cmd, out_log, err_log)
 
     def teardown(self, result=0):
         """
@@ -832,7 +871,7 @@ class DCANBOLDProcessing(Stage):
         log_dir = self._get_log_dir()
         out_log = os.path.join(log_dir, self.__class__.__name__ + '_teardown.out')
         err_log = os.path.join(log_dir, self.__class__.__name__ + '_teardown.err')
-        result = _call(cmd, out_log, err_log)
+        result = self.call(cmd, out_log, err_log)
 
         super(__class__, self).teardown(result)
 
