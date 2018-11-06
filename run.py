@@ -47,8 +47,8 @@ def _cli():
     return interface(args.bids_dir,  args.output_dir, args.subject_list,
                      args.collect, args.ncpus, args.stage, args.bandstop,
                      args.check_outputs_only, args.abcd_task, 
-                     args.study_template, args.print,
-                     args.ignore_expected_outputs)
+                     args.study_template, args.cleaning_json, 
+                     args.print_commands, args.ignore_expected_outputs)
 
 
 def generate_parser(parser=None):
@@ -90,13 +90,13 @@ def generate_parser(parser=None):
         help='collapses all sessions into one when running a subject.'
     )
     parser.add_argument(
-        '--ncpus', type=int, default=1,
+        '--ncpus', type=int, default=1, nargs=1,
         help='number of cores to use for concurrent processing and '
              'algorithmic speedups.  Warning: causes ANTs and FreeSurfer to '
              'produce non-deterministic results.'
     )
     parser.add_argument(
-        '--stage',
+        '--stage', nargs=1,
         help='begin from a given stage, continuing through.  Options: '
              'PreFreeSurfer, FreeSurfer, PostFreeSurfer, FMRIVolume, '
              'FMRISurface, DCANBOLDProcessing, ExecutiveSummary'
@@ -110,15 +110,16 @@ def generate_parser(parser=None):
              'recommended for data acquired with a frequency of approx. 1 Hz '
              'or more (TR<=1.0). Default is no filter'
     )
-    parser.add_argument(
-        '--check-outputs', action='store_true',
-        help='checks for the existence of outputs for each stage then exit. '
-             'Useful for debugging.'
-    )
     extras = parser.add_argument_group(
         'special pipeline options',
         description='options which pertain to an alternative pipeline or an '
                     'extra stage which is not\n inferred from the bids data.'
+    )
+    extras.add_argument(
+        '--custom-clean', metavar='JSON', nargs=1, dest='cleaning_json',
+        help='runs dcan cleaning script after the pipeline completes'
+             'successfully to delete pipeline outputs based on '
+             'the file structure specified in the custom-clean json.'
     )
     extras.add_argument(
         '--abcd-task', action='store_true',
@@ -158,8 +159,8 @@ def generate_parser(parser=None):
 
 def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
               start_stage=None, bandstop_params=None, check_only=False,
-              run_abcd_task=False, study_template=None, print_commands=False,
-              ignore_expected_outputs=False):
+              run_abcd_task=False, study_template=None, cleaning_json=None, 
+              print_commands=False, ignore_expected_outputs=False):
     """
     main application interface
     :param bids_dir: input bids dataset see "helpers.read_bids_dataset" for
@@ -217,7 +218,9 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
         if run_abcd_task:
             abcdtask = ABCDTask(session_spec)
             order.append(abcdtask)
-
+        if cleaning_json:
+            cclean = CustomClean(session_spec, cleaning_json)
+            order.append(cclean)
 
         if start_stage:
             names = [x.__class__.__name__ for x in order]

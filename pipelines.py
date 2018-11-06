@@ -912,6 +912,22 @@ class ExecutiveSummary(Stage):
         return self.spec.format(**self.kwargs)
 
 
+class CustomClean(Stage):
+
+    script = '{CUSTOMCLEANDIR}/cleaning_script.py'
+
+    spec = ' --dir={path}' \
+           ' --json={input_json}'
+
+    def __init__(self, config, input_json):
+        super(__class__, self).__init__(config)
+        self.kwargs['input_json'] = input_json
+
+    @property
+    def args(self):
+        return self.spec.format(**self.kwargs)
+
+
 def _call(cmd, out_log, err_log, num_threads=1):
     env = os.environ.copy()
     if num_threads > 1:
@@ -924,3 +940,4 @@ def _call(cmd, out_log, err_log, num_threads=1):
             if all(v == 0 for v in result):
                 result = 0
     return result
+
