@@ -46,7 +46,9 @@ def _cli():
 
     return interface(args.bids_dir,  args.output_dir, args.subject_list,
                      args.collect, args.ncpus, args.stage, args.bandstop,
-                     args.check_only, args.abcd_task, args.study_template)
+                     args.check_outputs_only, args.abcd_task, 
+                     args.study_template, args.print,
+                     args.ignore_expected_outputs)
 
 
 def generate_parser(parser=None):
@@ -109,9 +111,9 @@ def generate_parser(parser=None):
              'or more (TR<=1.0). Default is no filter'
     )
     parser.add_argument(
-        '--check-only', action='store_true',
-        help='checks for the existence of outputs for each stage. Useful for '
-             'debugging.'
+        '--check-outputs', action='store_true',
+        help='checks for the existence of outputs for each stage then exit. '
+             'Useful for debugging.'
     )
     extras = parser.add_argument_group(
         'special pipeline options',
@@ -132,13 +134,32 @@ def generate_parser(parser=None):
              'average adult, e.g. in elderly populations with large '
              'ventricles.'
     )
+    runopts = parser.add_argument_group(
+        'runtime options',
+        description='special changes to runtime behaviors. Debugging features.'
+    )
+    runopts.add_argument(
+        '--check-outputs-only', action='store_true',
+        help='checks for the existence of outputs for each stage then exit. '
+             'Useful for debugging.'
+    )
+    runopts.add_argument(
+        '--print-commands-only', action='store_true', dest='print',
+        help='print run commands for each stage to shell then exit.'
+    )
+    runopts.add_argument(
+        '--ignore-expected-outputs', action='store_true',
+        help='continues pipeline even if some expected outputs are missing.'
+    )
+
 
     return parser
 
 
 def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
               start_stage=None, bandstop_params=None, check_only=False,
-              run_abcd_task=False, study_template=None):
+              run_abcd_task=False, study_template=None, print_commands=False,
+              ignore_expected_outputs=False):
     """
     main application interface
     :param bids_dir: input bids dataset see "helpers.read_bids_dataset" for
@@ -205,6 +226,7 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
                 % start_stage
             order = order[names.index(start_stage):]
 
+        # special runtime options
         if check_only:
             for stage in order:
                 print('checking outputs for %s' % stage.__class__.__name__)
@@ -213,6 +235,15 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
                 except AssertionError:
                     pass
             return
+        if print_commands:
+            for stage in order:
+                stage.deactivate_runtime_calls()
+                stage.deactivate_check_expected_outputs()
+                stage.deactivate_remove_expected_outputs()
+        if ignore_expected_outputs:
+            print('ignoring checks for expected outputs.')
+            for stage in order:
+                stage.activate_ignore_expected_outputs()
 
         # run pipelines
         for stage in order:
