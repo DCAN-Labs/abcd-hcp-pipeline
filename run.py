@@ -48,7 +48,7 @@ def _cli():
                      args.collect, args.ncpus, args.stage, args.bandstop,
                      args.check_outputs_only, args.abcd_task, 
                      args.study_template, args.cleaning_json, 
-                     args.print_commands, args.ignore_expected_outputs)
+                     args.print, args.ignore_expected_outputs)
 
 
 def generate_parser(parser=None):
@@ -90,13 +90,13 @@ def generate_parser(parser=None):
         help='collapses all sessions into one when running a subject.'
     )
     parser.add_argument(
-        '--ncpus', type=int, default=1, nargs=1,
+        '--ncpus', type=int, default=1,
         help='number of cores to use for concurrent processing and '
              'algorithmic speedups.  Warning: causes ANTs and FreeSurfer to '
              'produce non-deterministic results.'
     )
     parser.add_argument(
-        '--stage', nargs=1,
+        '--stage',
         help='begin from a given stage, continuing through.  Options: '
              'PreFreeSurfer, FreeSurfer, PostFreeSurfer, FMRIVolume, '
              'FMRISurface, DCANBOLDProcessing, ExecutiveSummary'
@@ -116,7 +116,7 @@ def generate_parser(parser=None):
                     'extra stage which is not\n inferred from the bids data.'
     )
     extras.add_argument(
-        '--custom-clean', metavar='JSON', nargs=1, dest='cleaning_json',
+        '--custom-clean', metavar='JSON', dest='cleaning_json',
         help='runs dcan cleaning script after the pipeline completes'
              'successfully to delete pipeline outputs based on '
              'the file structure specified in the custom-clean json.'
