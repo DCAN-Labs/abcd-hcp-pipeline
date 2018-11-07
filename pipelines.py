@@ -100,15 +100,12 @@ class ParameterSettings(object):
 
         # input bids data struct
         self.bids_data = bids_data
-
         # @ parameters read from bids @ #
         self.t1w = self.bids_data['t1w']
         self.t1samplespacing = \
             '%.12f' % self.bids_data['t1w_metadata']['DwellTime']
         self.t1samplespacing = self.t1samplespacing.rstrip('0')
 
-        bids_root = self.t1w[0].split('/')[:-4]
-        self.unproc='/'.join(bids_root)
 
         if 'T2w' in self.bids_data['types']:
             self.useT2 = 'true'
@@ -170,9 +167,15 @@ class ParameterSettings(object):
         self.subject = self.bids_data['subject']
         self.session = self.bids_data['session']
 
-        deriv_root = self.path.split('/')[:-3]
-        self.deriv = '/'.join(deriv_root)
+        # Exec summ doesn't need this anymore. KJS 11/6/18
+        #deriv_root = self.path.split('/')[:-3]
+        #self.deriv = '/'.join(deriv_root)
 
+        # @ input files @ #
+        session_root = '/'.join(self.t1w[0].split('/')[:-2])
+        print("Session root = %s" % session_root)
+        self.unproc = os.path.join(session_root, 'func')
+        print("Unproc = %s" % self.unproc)
 
         # print command for HCP
         self.printcom = ''
@@ -604,7 +607,7 @@ class PreFreeSurfer(Stage):
         intended_idx = {}
         for direction in ['positive', 'negative']:
             for idx, sefm in enumerate(self.config.get_bids('fmap_metadata',
-                                                        'positive')):
+                                                        direction)):
                 intended_targets = sefm.get('IntendedFor', [])
                 if 'T1w' in ' '.join(intended_targets):
                     intended_idx[direction] = idx
@@ -736,7 +739,7 @@ class FMRIVolume(Stage):
         intended_idx = {}
         for direction in ['positive', 'negative']:
             for idx, sefm in enumerate(self.config.get_bids('fmap_metadata',
-                                                            'positive')):
+                                                            direction)):
                 intended_targets = sefm.get('IntendedFor', [])
                 if get_relpath(self.kwargs['fmritcs']) in ' '.join(
                         intended_targets):
@@ -898,10 +901,9 @@ class ExecutiveSummary(Stage):
 
     script = '{EXECSUMDIR}/summary_tools/executivesummary_wrapper.sh'
 
-    spec = ' --unproc_root={unproc}' \
-           ' --deriv_root={deriv}' \
+    spec = ' --unproc_path={unproc}' \
+           ' --deriv_path={path}' \
            ' --subject_id={subject}' \
-           ' --visit={session}' \
            ' --ex_summ_dir={summary_dir}'
 
     def __init__(self, config):
