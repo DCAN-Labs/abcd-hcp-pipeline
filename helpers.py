@@ -162,10 +162,24 @@ def get_readoutdir(metadata):
     # convert 3-vector to symbolic unit vector
     i = max([0, 1, 2], key=lambda x: abs(readoutvec[x]))
     readoutdir = ['x', 'y', 'z'][i]
-    if readoutvec[i] < 0:
+    # TODO: Fix readoutdir algorithm. Arbitratily switched pos to neg for ABCD.
+    if readoutvec[i] > 0:
         readoutdir += '-'
 
     return readoutdir
+
+
+def get_realdwelltime(metadata):
+    """
+    attempts to compute real dwell time from metadata fields. Certain 
+    reconstruction parameters such as phaseOversampling and phaseResolution
+    may not be accounted for.
+    """
+    pBW = metadata['PixelBandwidth']
+    num_steps = metadata['AcquisitionMatrixPE']
+    parallelfactor = metadata.get('ParallelReductionFactorInPlane', 1)
+    realdwelltime = 1 / (pBW * num_steps * parallelfactor)
+    return str(realdwelltime)
 
 
 def get_relpath(filename):
