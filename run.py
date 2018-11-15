@@ -175,7 +175,6 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
     :param check_only: check expected outputs for each stage then terminate
     :return:
     """
-
     # read from bids dataset
     assert os.path.isdir(bids_dir), bids_dir + ' is not a directory!'
     if not os.path.isdir(output_dir):

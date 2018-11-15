@@ -14,7 +14,6 @@
     "{path}/T1w/{subject}/mri/T1w_hires.nii.gz",
     "{path}/T1w/T1w_acpc_dc_restore_brain_1mm.nii.gz",
     "{path}/T1w/T1w_acpc_dc_restore_1mm.nii.gz",
-    "{path}/T1w/T1w_acpc_dc_restore_brain_1mm.nii.gz",
     "{path}/T1w/lh.EC_average",
     "{path}/T1w/rh.EC_average",
     "{path}/T1w/{subject}/label/lh.aparc.a2009s.annot",
@@ -84,7 +83,6 @@
   "PostFreeSurfer": [
     "{path}/T1w/ribbon.nii.gz",
     "{path}/MNINonLinear/ribbon.nii.gz",
-    "{path}/MNINonLinear/fsaverage_LR32k/{subject}.ArealDistortion_{regname}.32k_fs_LR.dscalar.nii",
     "{path}/MNINonLinear/{subject}.thickness.164k_fs_LR.dscalar.nii",
     "{path}/MNINonLinear/{subject}.sulc.164k_fs_LR.dscalar.nii",
     "{path}/MNINonLinear/{subject}.curvature.164k_fs_LR.dscalar.nii",

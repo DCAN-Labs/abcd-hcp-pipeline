@@ -5,8 +5,8 @@ import subprocess
 
 import os
 
-from helpers import (get_fmriname, get_readoutdir, get_relpath, get_taskname,
-                     ijk_to_xyz)
+from helpers import (get_fmriname, get_readoutdir, get_realdwelltime, 
+                     get_relpath, get_taskname, ijk_to_xyz)
 
 
 class ParameterSettings(object):
@@ -102,17 +102,14 @@ class ParameterSettings(object):
         self.bids_data = bids_data
         # @ parameters read from bids @ #
         self.t1w = self.bids_data['t1w']
-        self.t1samplespacing = \
-            '%.12f' % self.bids_data['t1w_metadata']['DwellTime']
-        self.t1samplespacing = self.t1samplespacing.rstrip('0')
-
+        self.t1samplespacing = get_realdwelltime(
+            self.bids_data['t1w_metadata'])
 
         if 'T2w' in self.bids_data['types']:
             self.useT2 = 'true'
             self.t2w = self.bids_data['t2w']
-            self.t2samplespacing = \
-                '%.12f' % self.bids_data['t2w_metadata']['DwellTime']
-            self.t2samplespacing = self.t2samplespacing.rstrip('0')
+            self.t2samplespacing = get_realdwelltime(
+                self.bids_data['t2w_metadata'])
         else:
             self.useT2 = 'false'
             self.t2w = []
@@ -901,8 +898,8 @@ class ExecutiveSummary(Stage):
 
     script = '{EXECSUMDIR}/summary_tools/executivesummary_wrapper.sh'
 
-    spec = ' --unproc_path={unproc}' \
-           ' --deriv_path={path}' \
+    spec = ' --unproc_root={unproc}' \
+           ' --deriv_root={path}' \
            ' --subject_id={subject}' \
            ' --ex_summ_dir={summary_dir}'
 
