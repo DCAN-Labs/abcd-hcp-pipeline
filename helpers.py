@@ -179,7 +179,7 @@ def get_realdwelltime(metadata):
     num_steps = metadata['AcquisitionMatrixPE']
     parallelfactor = metadata.get('ParallelReductionFactorInPlane', 1)
     realdwelltime = 1 / (pBW * num_steps * parallelfactor)
-    return str(realdwelltime)
+    return '%0.9f' % realdwelltime
 
 
 def get_relpath(filename):
