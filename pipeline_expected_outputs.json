@@ -264,5 +264,8 @@
   "FMRISurface": [],
   "DCANBOLDProcessing": [],
   "ABCDTask": [],
-  "ExecutiveSummary": []
+  "ExecutiveSummary": [],
+  "CustomClean": [
+    "{path}/custom_clean_success_record.txt"
+  ]
 }

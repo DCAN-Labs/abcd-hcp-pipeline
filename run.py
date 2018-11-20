@@ -1,28 +1,28 @@
 #!/usr/bin/env python3
 
 __doc__ = \
-"""The Developmental Cognition and Neuroimaging (DCAN) lab fMRI Pipeline [1].  
-This BIDS application initiates a functional MRI processing pipeline built 
-upon the Human Connectome Project's minimal processing pipelines [2].  The 
-application requires only a dataset conformed to the BIDS specification, and 
-little-to-no additional configuration on the part of the user. BIDS format 
+"""The Developmental Cognition and Neuroimaging (DCAN) lab fMRI Pipeline [1].
+This BIDS application initiates a functional MRI processing pipeline built
+upon the Human Connectome Project's minimal processing pipelines [2].  The
+application requires only a dataset conformed to the BIDS specification, and
+little-to-no additional configuration on the part of the user. BIDS format
 and applications are explained in detail at http://bids.neuroimaging.io/
 """
 __references__ = \
 """References
 ----------
 [1] dcan-pipelines (for now, please cite [3] in use of this software)
-[2] Glasser, MF. et al. The minimal preprocessing pipelines for the Human 
-Connectome Project. Neuroimage. 2013 Oct 15;80:105-24. 
+[2] Glasser, MF. et al. The minimal preprocessing pipelines for the Human
+Connectome Project. Neuroimage. 2013 Oct 15;80:105-24.
 10.1016/j.neuroimage.2013.04.127
-[3] Fair, D. et al. Correction of respiratory artifacts in MRI head motion 
+[3] Fair, D. et al. Correction of respiratory artifacts in MRI head motion
 estimates. Biorxiv. 2018 June 7. doi: https://doi.org/10.1101/337360
-[4] Dale, A.M., Fischl, B., Sereno, M.I., 1999. Cortical surface-based 
+[4] Dale, A.M., Fischl, B., Sereno, M.I., 1999. Cortical surface-based
 analysis. I. Segmentation and surface reconstruction. Neuroimage 9, 179-194.
-[5] M. Jenkinson, C.F. Beckmann, T.E. Behrens, M.W. Woolrich, S.M. Smith. FSL. 
+[5] M. Jenkinson, C.F. Beckmann, T.E. Behrens, M.W. Woolrich, S.M. Smith. FSL.
 NeuroImage, 62:782-90, 2012
-[6] Avants, BB et al. The Insight ToolKit image registration framework. Front 
-Neuroinform. 2014 Apr 28;8:44. doi: 10.3389/fninf.2014.00044. eCollection 2014. 
+[6] Avants, BB et al. The Insight ToolKit image registration framework. Front
+Neuroinform. 2014 Apr 28;8:44. doi: 10.3389/fninf.2014.00044. eCollection 2014.
 """
 __version__ = "1.0.1"
 
@@ -32,7 +32,7 @@ import os
 from helpers import read_bids_dataset
 from pipelines import (ParameterSettings, PreFreeSurfer, FreeSurfer,
                        PostFreeSurfer, FMRIVolume, FMRISurface,
-                       DCANBOLDProcessing, ExecutiveSummary)
+                       DCANBOLDProcessing, ExecutiveSummary, CustomClean)
 from extra_pipelines import ABCDTask
 
 
@@ -46,8 +46,8 @@ def _cli():
 
     return interface(args.bids_dir,  args.output_dir, args.subject_list,
                      args.collect, args.ncpus, args.stage, args.bandstop,
-                     args.check_outputs_only, args.abcd_task, 
-                     args.study_template, args.cleaning_json, 
+                     args.check_outputs_only, args.abcd_task,
+                     args.study_template, args.cleaning_json,
                      args.print, args.ignore_expected_outputs)
 
 
@@ -99,7 +99,7 @@ def generate_parser(parser=None):
         '--stage',
         help='begin from a given stage, continuing through.  Options: '
              'PreFreeSurfer, FreeSurfer, PostFreeSurfer, FMRIVolume, '
-             'FMRISurface, DCANBOLDProcessing, ExecutiveSummary'
+             'FMRISurface, DCANBOLDProcessing, ExecutiveSummary, CustomClean'
     )
     parser.add_argument(
         '--bandstop', type=float, nargs=2, metavar=('LOWER', 'UPPER'),
@@ -126,7 +126,7 @@ def generate_parser(parser=None):
         help='runs abcd task data through task fmri analysis, adding this '
              'stage to the end. Warning: Not written for general use: a '
              'general task analysis module will be included in a future '
-             'release.' 
+             'release.'
     )
     extras.add_argument(
         '--study-template', nargs=2, metavar=('HEAD', 'BRAIN'),
@@ -159,7 +159,7 @@ def generate_parser(parser=None):
 
 def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
               start_stage=None, bandstop_params=None, check_only=False,
-              run_abcd_task=False, study_template=None, cleaning_json=None, 
+              run_abcd_task=False, study_template=None, cleaning_json=None,
               print_commands=False, ignore_expected_outputs=False):
     """
     main application interface
