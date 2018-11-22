@@ -716,7 +716,8 @@ class FMRIVolume(Stage):
            ' --topupconfig={topupconfig}' \
            ' --printcom={printcom}' \
            ' --biascorrection={fmribfcmethod}' \
-           ' --mctype={mctype}'
+           ' --mctype={mctype}' \
+           ' --useT2={useT2}'
 
     def __init__(self, config):
         super(__class__, self).__init__(config)
