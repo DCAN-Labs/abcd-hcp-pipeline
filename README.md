@@ -74,7 +74,7 @@ docker run --rm \
 To call using singularity:
 
 ```{bash}
-singularity exec \
+singularity run \
     -B /path/to/bids_dataset:/bids_input \
     -B /path/to/outputs:/output \
     ./dcan-pipelines.img /bids_input /output [OPTIONS]
