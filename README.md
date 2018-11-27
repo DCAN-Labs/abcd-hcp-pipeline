@@ -92,8 +92,10 @@ Options:
 ```{bash}
 usage: dcan-pipelines [-h] [--version] [--participant-label ID [ID ...]]
                       [--all-sessions] [--ncpus NCPUS] [--stage STAGE]
-                      [--bandstop LOWER UPPER] [--check-only] [--abcd-task]
-                      [--study-template HEAD BRAIN]
+                      [--bandstop LOWER UPPER] [--custom-clean JSON]
+                      [--abcd-task] [--study-template HEAD BRAIN]
+                      [--check-outputs-only] [--print-commands-only]
+                      [--ignore-expected-outputs]
                       bids_dir output_dir
 
 The Developmental Cognition and Neuroimaging (DCAN) lab fMRI Pipeline [1].
@@ -126,7 +128,8 @@ optional arguments:
                         FreeSurfer to produce non-deterministic results.
   --stage STAGE         begin from a given stage, continuing through. Options:
                         PreFreeSurfer, FreeSurfer, PostFreeSurfer, FMRIVolume,
-                        FMRISurface, DCANBOLDProcessing, ExecutiveSummary
+                        FMRISurface, DCANBOLDProcessing, ExecutiveSummary,
+                        CustomClean
   --bandstop LOWER UPPER
                         parameters for motion regressor band-stop filter. It
                         is recommended for the boundaries to match the inter-
@@ -135,13 +138,15 @@ optional arguments:
                         These parameters are highly recommended for data
                         acquired with a frequency of approx. 1 Hz or more
                         (TR<=1.0). Default is no filter
-  --check-only          checks for the existence of outputs for each stage.
-                        Useful for debugging.
 
 special pipeline options:
   options which pertain to an alternative pipeline or an extra stage which is not
    inferred from the bids data.
 
+  --custom-clean JSON   runs dcan cleaning script after the pipeline
+                        completessuccessfully to delete pipeline outputs based
+                        on the file structure specified in the custom-clean
+                        json.
   --abcd-task           runs abcd task data through task fmri analysis, adding
                         this stage to the end. Warning: Not written for
                         general use: a general task analysis module will be
@@ -151,6 +156,17 @@ special pipeline options:
                         nonlinear registration, effective where population
                         differs greatly from average adult, e.g. in elderly
                         populations with large ventricles.
+
+runtime options:
+  special changes to runtime behaviors. Debugging features.
+
+  --check-outputs-only  checks for the existence of outputs for each stage
+                        then exit. Useful for debugging.
+  --print-commands-only
+                        print run commands for each stage to shell then exit.
+  --ignore-expected-outputs
+                        continues pipeline even if some expected outputs are
+                        missing.
 
 References
 ----------
