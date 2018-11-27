@@ -170,9 +170,7 @@ class ParameterSettings(object):
 
         # @ input files @ #
         session_root = '/'.join(self.t1w[0].split('/')[:-2])
-        print("Session root = %s" % session_root)
         self.unproc = os.path.join(session_root, 'func')
-        print("Unproc = %s" % self.unproc)
 
         # print command for HCP
         self.printcom = ''
