@@ -36,11 +36,12 @@ export MSMBin=${HCPPIPEDIR}/MSMBinaries
 
 # Set up DCAN Environment Variables
 export MCRROOT=/home/exacloud/lustre1/fnl_lab/code/external/utilities/MATLAB_MCR/v91
-export DCANBOLDPROCDIR=/home/exacloud/lustre1/fnl_lab/code/internal/pipelines/dcan_bold_proc
+export DCANBOLDPROCDIR=/home/exacloud/lustre1/fnl_lab/code/internal/utilities/DCAN_bold_proc
 export DCANBOLDPROCVER=DCANBOLDProc_v4.0.0
-export EXECSUMDIR=/home/exacloud/lustre1/fnl_lab/code/internal/utilities/executivesummary_bids
-export ABCDTASKPREPDIR=/home/exacloud/lustre1/fnl_lab/code/internal/pipelines/HCP_generic_srun/ABCD_tfMRI
+export EXECSUMDIR=/home/exacloud/lustre1/fnl_lab/code/internal/utilities/executivesummary-bids
+export ABCDTASKPREPDIR=/home/exacloud/lustre1/fnl_lab/code/internal/utilities/ABCD/ABCD_tfMRI
 export SOURCEDATADIR=/home/exacloud/lustre1/fnl_lab/data/HCP/sourcedata/ABCD
+export CUSTOMCLEANDIR=/home/exacloud/lustre1/fnl_lab/code/internal/utilities/custom-clean-abcd-bids-v1.0.0
 
 # binary dependencies
 export ANTSPATH=/home/exacloud/lustre1/fnl_lab/code/external/ANTs/antsbin/bin
