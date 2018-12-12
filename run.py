@@ -196,27 +196,41 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
             'sub-%s' % session['subject'],
             'ses-%s' % session['session']
         )
+        # detect available data for pipeline stages
+        modes = session_spec['types']
+        anatomical_pipelines = 'T1w' in modes
+        functional_pipelines = 'bold' in modes
+        dwi_pipelines = 'dwi' in modes
+        summary = True
+
         session_spec = ParameterSettings(session, out_dir)
 
-        # set intermediate template if specified
+        # set session parameters
         if study_template is not None:
             session_spec.set_study_template(*study_template)
 
         # create pipelines
-        pre = PreFreeSurfer(session_spec)
-        free = FreeSurfer(session_spec)
-        post = PostFreeSurfer(session_spec)
-        vol = FMRIVolume(session_spec)
-        surf = FMRISurface(session_spec)
-        boldproc = DCANBOLDProcessing(session_spec)
-        execsum = ExecutiveSummary(session_spec)
+        order = []
+        if anatomical_pipelines:
+            pre = PreFreeSurfer(session_spec)
+            free = FreeSurfer(session_spec)
+            post = PostFreeSurfer(session_spec)
+            order += [pre, free, post]
+        if functional_pipelines:
+            vol = FMRIVolume(session_spec)
+            surf = FMRISurface(session_spec)
+            boldproc = DCANBOLDProcessing(session_spec)
+            order += [vol, surf, boldproc]
+        if dwi_pipelines:
+            diffprep = DiffusionPreprocessing(session_spec)
+            order += [diffprep]
+        if summary:
+            execsum = ExecutiveSummary(session_spec)
+            order += [execsum]
 
         # set user parameters
         if bandstop_params is not None:
             boldproc.set_bandstop_filter(*bandstop_params)
-
-        # determine pipeline order
-        order = [pre, free, post, vol, surf, boldproc, execsum]
 
         # add optional pipelines
         if run_abcd_task:
