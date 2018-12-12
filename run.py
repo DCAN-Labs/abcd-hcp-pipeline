@@ -135,6 +135,11 @@ def generate_parser(parser=None):
              'average adult, e.g. in elderly populations with large '
              'ventricles.'
     )
+    extras.add_argument(
+        '--ignore-func', action='store_true',
+        help='pipeline will only process anatomical scans. Must provide this '
+             'flag for datasets without bold data.'
+    )
     runopts = parser.add_argument_group(
         'runtime options',
         description='special changes to runtime behaviors. Debugging features.'
