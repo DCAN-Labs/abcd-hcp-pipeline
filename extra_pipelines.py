@@ -71,10 +71,11 @@ class ABCDTask(Stage):
         setup_script = '%s/tfMRI.py' % \
                        os.environ['ABCDTASKPREPDIR']
         arg1 = self.kwargs['path']
-        arg2 = os.environ['SOURCEDATADIR']
+        arg2 = self.kwargs['sourcedata_root']
         arg3 = self.kwargs['subject']
         arg4 = self.kwargs['session']
         cmd = ' '.join((setup_script, arg1, arg2, arg3, arg4))
+        print(cmd)
 
         log_dir = self._get_log_dir()
         out_log = os.path.join(log_dir, self.__class__.__name__ + '_setup.out')

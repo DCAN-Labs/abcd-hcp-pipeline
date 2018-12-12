@@ -5,7 +5,7 @@ import subprocess
 
 import os
 
-from helpers import (get_fmriname, get_readoutdir, get_realdwelltime, 
+from helpers import (get_fmriname, get_readoutdir, get_realdwelltime,
                      get_relpath, get_taskname, ijk_to_xyz)
 
 
@@ -171,6 +171,9 @@ class ParameterSettings(object):
         # @ input files @ #
         session_root = '/'.join(self.t1w[0].split('/')[:-2])
         self.unproc = os.path.join(session_root, 'func')
+
+        bids_input_root = '/'.join(session_root.split('/')[:-2])
+        self.sourcedata_root = os.path.join(bids_input_root,'sourcedata')
 
         # print command for HCP
         self.printcom = ''
