@@ -78,7 +78,7 @@
     "{path}/T1w/{subject}/surf/rh.sulc",
     "{path}/T1w/{subject}/surf/rh.thickness",
     "{path}/T1w/{subject}/surf/rh.volume",
-    "{path}/T1w/{subject}/surf/rh.white"    
+    "{path}/T1w/{subject}/surf/rh.white"
   ],
   "PostFreeSurfer": [
     "{path}/T1w/ribbon.nii.gz",
@@ -180,10 +180,6 @@
     "{path}/MNINonLinear/fsaverage_LR32k/{subject}.StrainR_{regname}.32k_fs_LR.dscalar.nii",
     "{path}/MNINonLinear/fsaverage_LR32k/{subject}.aparc.32k_fs_LR.dlabel.nii",
     "{path}/MNINonLinear/fsaverage_LR32k/{subject}.aparc.a2009s.32k_fs_LR.dlabel.nii",
-    "{path}/MNINonLinear/fsaverage_LR32k/{subject}.curvature.32k_fs_LR.dscalar.nii",
-    "{path}/MNINonLinear/fsaverage_LR32k/{subject}.sulc.32k_fs_LR.dscalar.nii",
-    "{path}/MNINonLinear/fsaverage_LR32k/{subject}.thickness.32k_fs_LR.dscalar.nii",
-    "{path}/MNINonLinear/ribbon.nii.gz",
     "{path}/MNINonLinear/wmparc.nii.gz",
     "{path}/MNINonLinear/xfms/standard2acpc_dc.nii.gz",
     "{path}/MNINonLinear/{subject}.164k_fs_LR.wb.spec",
@@ -225,9 +221,6 @@
     "{path}/MNINonLinear/{subject}.R.white.164k_fs_LR.surf.gii",
     "{path}/MNINonLinear/{subject}.aparc.164k_fs_LR.dlabel.nii",
     "{path}/MNINonLinear/{subject}.aparc.a2009s.164k_fs_LR.dlabel.nii",
-    "{path}/MNINonLinear/{subject}.curvature.164k_fs_LR.dscalar.nii",
-    "{path}/MNINonLinear/{subject}.sulc.164k_fs_LR.dscalar.nii",
-    "{path}/MNINonLinear/{subject}.thickness.164k_fs_LR.dscalar.nii",
     "{path}/T1w/Native/{subject}.L.inflated.native.surf.gii",
     "{path}/T1w/Native/{subject}.L.midthickness.native.surf.gii",
     "{path}/T1w/Native/{subject}.L.pial.native.surf.gii",
@@ -255,7 +248,6 @@
     "{path}/T1w/fsaverage_LR32k/{subject}.R.pial.32k_fs_LR.surf.gii",
     "{path}/T1w/fsaverage_LR32k/{subject}.R.very_inflated.32k_fs_LR.surf.gii",
     "{path}/T1w/fsaverage_LR32k/{subject}.R.white.32k_fs_LR.surf.gii",
-    "{path}/T1w/ribbon.nii.gz",
     "{path}/T1w/wmparc.nii.gz",
     "{path}/T1w/wmparc_1mm.nii.gz"
   ],
