@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 __doc__ = \
 """The Developmental Cognition and Neuroimaging (DCAN) lab fMRI Pipeline [1].
 This BIDS application initiates a functional MRI processing pipeline built
@@ -29,10 +28,11 @@ __version__ = "1.0.1"
 import argparse
 import os
 
-from helpers import read_bids_dataset
+from helpers import read_bids_dataset, validate_config
 from pipelines import (ParameterSettings, PreFreeSurfer, FreeSurfer,
                        PostFreeSurfer, FMRIVolume, FMRISurface,
-                       DCANBOLDProcessing, ExecutiveSummary, CustomClean)
+                       DCANBOLDProcessing, ExecutiveSummary, CustomClean,
+                       DiffusionPreprocessing)
 from extra_pipelines import ABCDTask
 
 
@@ -44,7 +44,7 @@ def _cli():
     parser = generate_parser()
     args = parser.parse_args()
 
-    return interface(args.bids_dir,  args.output_dir, args.subject_list,
+    return interface(args.bids_dir, args.output_dir, args.subject_list,
                      args.collect, args.ncpus, args.stage, args.bandstop,
                      args.check_outputs_only, args.abcd_task,
                      args.study_template, args.cleaning_json,
@@ -197,10 +197,11 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
             'ses-%s' % session['session']
         )
         # detect available data for pipeline stages
+        validate_config(session_spec, **kwargs)
         modes = session_spec['types']
-        anatomical_pipelines = 'T1w' in modes
-        functional_pipelines = 'bold' in modes
-        dwi_pipelines = 'dwi' in modes
+        run_anat = 'T1w' in modes
+        run_func = 'bold' in modes
+        run_dwi = 'dwi' in modes
         summary = True
 
         session_spec = ParameterSettings(session, out_dir)
@@ -211,17 +212,17 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
 
         # create pipelines
         order = []
-        if anatomical_pipelines:
+        if run_anat:
             pre = PreFreeSurfer(session_spec)
             free = FreeSurfer(session_spec)
             post = PostFreeSurfer(session_spec)
             order += [pre, free, post]
-        if functional_pipelines:
+        if run_func:
             vol = FMRIVolume(session_spec)
             surf = FMRISurface(session_spec)
             boldproc = DCANBOLDProcessing(session_spec)
             order += [vol, surf, boldproc]
-        if dwi_pipelines:
+        if run_dwi:
             diffprep = DiffusionPreprocessing(session_spec)
             order += [diffprep]
         if summary:
