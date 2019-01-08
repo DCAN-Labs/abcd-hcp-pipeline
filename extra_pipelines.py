@@ -73,7 +73,7 @@ class ABCDTask(Stage):
         arg2 = self.kwargs['sourcedata_root']
         arg3 = self.kwargs['subject']
         arg4 = self.kwargs['session']
-        anat_metadata = self.config.get_bids('t1w_metadata')[0]
+        anat_metadata = self.config.get_bids('t1w_metadata')
         # get make/software information
         make = anat_metadata['Manufacturer']
         if make == 'GE':
