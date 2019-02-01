@@ -156,7 +156,7 @@ class ParameterSettings(object):
             self.fmribfcmethod = None  # this parameter has not been validated
 
         # dwi parameters
-        if self.get_bids('dwi'):
+        if 'dwi' in self.bids_data['types']:
             pass
 
         # @TODO handle bids formatted physio data

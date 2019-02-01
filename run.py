@@ -210,8 +210,8 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
             'ses-%s' % session['session']
         )
         # detect available data for pipeline stages
-        validate_config(session_spec, **kwargs)
-        modes = session_spec['types']
+        validate_config(session, ignore_modalities)
+        modes = session['types']
         run_anat = 'T1w' in modes
         run_func = 'bold' in modes and 'func' not in ignore_modalities
         run_dwi = 'dwi' in modes and 'dwi' not in ignore_modalities

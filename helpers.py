@@ -254,7 +254,7 @@ def ijk_to_xyz(vec, patient_orientation=None):
     return vmap[vec]
 
 
-def validate_config(bids_spec, **kwargs):
+def validate_config(bids_spec, ignore_modalities):
     """
     function for all preliminary data checks.
     :param bids_spec: spec returned from get_bids_data
@@ -264,9 +264,9 @@ def validate_config(bids_spec, **kwargs):
     t1w = 'T1w' in modes
     func = 'bold' in modes
     dwi = 'dwi' in modes
-    assert t1w in modes, 'T1w image not found!'
-    assert func or kwargs['ignore_func'], 'must provide functional data or ' \
-                                          'specify --ignore-func'
+    assert t1w, 'T1w image not found!'
+    assert func or 'func' in ignore_modalities, 'must provide functional ' \
+                                                'data or specify --ignore func'
     if dwi:
         print('WARNING: dwi preprocessing pipeline is not yet implemented! '
               'Skipping dwi...')
