@@ -257,6 +257,7 @@
   "DCANBOLDProcessing": [],
   "ABCDTask": [],
   "ExecutiveSummary": [],
+  "DiffusionPreprocessing": [],
   "CustomClean": [
     "{path}/custom_clean_success_record.txt"
   ]

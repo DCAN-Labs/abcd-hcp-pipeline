@@ -149,7 +149,7 @@ def generate_parser(parser=None):
              'ventricles.'
     )
     extras.add_argument(
-        '--ignore', choices=['func', 'dwi'], action='append',
+        '--ignore', choices=['func', 'dwi'], action='append', default=[],
         help='ignore a modality in processing. Option can be repeated.'
     )
     runopts = parser.add_argument_group(
@@ -236,8 +236,10 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
             boldproc = DCANBOLDProcessing(session_spec)
             order += [vol, surf, boldproc]
         if run_dwi:
-            diffprep = DiffusionPreprocessing(session_spec)
-            order += [diffprep]
+            print('dwi preprocessing is still a work in progress. Skipping.')
+            if False:
+                diffprep = DiffusionPreprocessing(session_spec)
+                order += [diffprep]
         if summary:
             execsum = ExecutiveSummary(session_spec)
             order += [execsum]
