@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 __doc__ = \
 """The Developmental Cognition and Neuroimaging (DCAN) lab fMRI Pipeline [1].
 This BIDS application initiates a functional MRI processing pipeline built
@@ -29,10 +28,11 @@ __version__ = "1.0.1"
 import argparse
 import os
 
-from helpers import read_bids_dataset
+from helpers import read_bids_dataset, validate_config
 from pipelines import (ParameterSettings, PreFreeSurfer, FreeSurfer,
                        PostFreeSurfer, FMRIVolume, FMRISurface,
-                       DCANBOLDProcessing, ExecutiveSummary, CustomClean)
+                       DCANBOLDProcessing, ExecutiveSummary, CustomClean,
+                       DiffusionPreprocessing)
 from extra_pipelines import ABCDTask
 
 
@@ -44,11 +44,24 @@ def _cli():
     parser = generate_parser()
     args = parser.parse_args()
 
-    return interface(args.bids_dir,  args.output_dir, args.subject_list,
-                     args.collect, args.ncpus, args.stage, args.bandstop,
-                     args.check_outputs_only, args.abcd_task,
-                     args.study_template, args.cleaning_json,
-                     args.print, args.ignore_expected_outputs)
+    kwargs = {
+        'bids_dir': args.bids_dir,
+        'output_dir': args.output_dir,
+        'subject_list': args.subject_list,
+        'collect': args.collect,
+        'ncpus': args.ncpus,
+        'start_stage': args.stage,
+        'bandstop_params': args.bandstop,
+        'check_only': args.check_outputs_only,
+        'run_abcd_task': args.abcd_task,
+        'study_template': args.study_template,
+        'cleaning_json': args.cleaning_json,
+        'print_commands': args.print,
+        'ignore_expected_outputs': args.ignore_expected_outputs,
+        'ignore_modalities': args.ignore
+    }
+
+    return interface(**kwargs)
 
 
 def generate_parser(parser=None):
@@ -135,6 +148,10 @@ def generate_parser(parser=None):
              'average adult, e.g. in elderly populations with large '
              'ventricles.'
     )
+    extras.add_argument(
+        '--ignore', choices=['func', 'dwi'], action='append', default=[],
+        help='ignore a modality in processing. Option can be repeated.'
+    )
     runopts = parser.add_argument_group(
         'runtime options',
         description='special changes to runtime behaviors. Debugging features.'
@@ -160,7 +177,8 @@ def generate_parser(parser=None):
 def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
               start_stage=None, bandstop_params=None, check_only=False,
               run_abcd_task=False, study_template=None, cleaning_json=None,
-              print_commands=False, ignore_expected_outputs=False):
+              print_commands=False, ignore_expected_outputs=False, 
+              ignore_modalities=[]):
     """
     main application interface
     :param bids_dir: input bids dataset see "helpers.read_bids_dataset" for
@@ -191,27 +209,44 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
             'sub-%s' % session['subject'],
             'ses-%s' % session['session']
         )
+        # detect available data for pipeline stages
+        validate_config(session, ignore_modalities)
+        modes = session['types']
+        run_anat = 'T1w' in modes
+        run_func = 'bold' in modes and 'func' not in ignore_modalities
+        run_dwi = 'dwi' in modes and 'dwi' not in ignore_modalities
+        summary = True
+
         session_spec = ParameterSettings(session, out_dir)
 
-        # set intermediate template if specified
+        # set session parameters
         if study_template is not None:
             session_spec.set_study_template(*study_template)
 
         # create pipelines
-        pre = PreFreeSurfer(session_spec)
-        free = FreeSurfer(session_spec)
-        post = PostFreeSurfer(session_spec)
-        vol = FMRIVolume(session_spec)
-        surf = FMRISurface(session_spec)
-        boldproc = DCANBOLDProcessing(session_spec)
-        execsum = ExecutiveSummary(session_spec)
+        order = []
+        if run_anat:
+            pre = PreFreeSurfer(session_spec)
+            free = FreeSurfer(session_spec)
+            post = PostFreeSurfer(session_spec)
+            order += [pre, free, post]
+        if run_func:
+            vol = FMRIVolume(session_spec)
+            surf = FMRISurface(session_spec)
+            boldproc = DCANBOLDProcessing(session_spec)
+            order += [vol, surf, boldproc]
+        if run_dwi:
+            print('dwi preprocessing is still a work in progress. Skipping.')
+            if False:
+                diffprep = DiffusionPreprocessing(session_spec)
+                order += [diffprep]
+        if summary:
+            execsum = ExecutiveSummary(session_spec)
+            order += [execsum]
 
         # set user parameters
         if bandstop_params is not None:
             boldproc.set_bandstop_filter(*bandstop_params)
-
-        # determine pipeline order
-        order = [pre, free, post, vol, surf, boldproc, execsum]
 
         # add optional pipelines
         if run_abcd_task:

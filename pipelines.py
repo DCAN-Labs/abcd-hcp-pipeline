@@ -125,13 +125,18 @@ class ParameterSettings(object):
                 'EffectiveEchoSpacing']
             self.echospacing = ('%.12f' % self.echospacing).rstrip('0')
             # distortion correction phase encoding direction
-            self.seunwarpdir = ijk_to_xyz(
-                self.bids_data['func_metadata']['PhaseEncodingDirection'])
+            if self.bids_data['func']:
+                self.seunwarpdir = ijk_to_xyz(
+                    self.bids_data['func_metadata']['PhaseEncodingDirection'])
+            else:
+                # if no functional data is provided, use positive spin echo
+                self.seunwarpdir = ijk_to_xyz(
+                    self.bids_data['fmap_metadata']['positive'][0][
+                        'PhaseEncodingDirection'])
 
             # set unused fmap parameters to none
             self.fmapmag = self.fmapphase = self.fmapgeneralelectric = \
                 self.echodiff = self.gdcoeffs = None
-            # @TODO decide on bfcmethod for fmri data.
 
         elif 'magnitude' in self.bids_data['types']:
             self.dcmethod = 'FIELDMAP'
@@ -148,7 +153,11 @@ class ParameterSettings(object):
                 self.seunwarpdir = self.echospacing = None
 
         if not hasattr(self, 'fmribfcmethod'):
-            self.fmribfcmethod = None
+            self.fmribfcmethod = None  # this parameter has not been validated
+
+        # dwi parameters
+        if 'dwi' in self.bids_data['types']:
+            pass
 
         # @TODO handle bids formatted physio data
         self.physio = None
@@ -179,9 +188,11 @@ class ParameterSettings(object):
         self.printcom = ''
 
     def __getitem__(self, item):
+        # item getter
         return self._params()[item]
 
     def __setitem__(self, key, value):
+        # item setter
         setattr(self, key, value)
 
     def _params(self):
@@ -256,8 +267,7 @@ class Status(object):
 
     def __init__(self, folder_path):
         """
-        Args:
-            folder_path (str): absolute path to the Stage's bookkeeping
+        param folder_path (str): absolute path to the Stage's bookkeeping
             (e.g. /output/sub/ses/processing_logs/PipelineStage)
         """
         self.file_path = os.path.join(folder_path, Status.name)
@@ -272,10 +282,12 @@ class Status(object):
             self._write_dict(**defaults)
 
     def __getitem__(self, key):
+        # item getter
         with open(self.file_path, 'r') as fd:
             return json.load(fd)[key]
 
     def __setitem__(self, key, value):
+        # item setter
         with open(self.file_path, 'r') as fd:
             store = json.load(fd)
         store[key] = value
@@ -283,30 +295,45 @@ class Status(object):
         return value
 
     def _write_dict(self, **contents):
+        """
+        write status dictionary to status.json in Stage log folder.
+        """
         with open(self.file_path, 'w') as fd:
             json.dump(contents, fd, indent=4)
 
     def increment_run(self):
+        # tic runs up, should be called on stage start.
         self['num_runs'] += 1
 
     def update_start_run(self):
+        # reset node_status to incomplete when stage begins
         self.increment_run()
         self['node_status'] = Status.states['incomplete']
 
     def update_success(self):
+        # update successful completion of stage
         self['node_status'] = Status.states['succeeded']
         self['comment'] = ''
 
     def update_failure(self, comment=''):
+        """
+        update stage failed.
+        :param comment: optional comment describing failure.
+        """
         self['node_status'] = Status.states['failed']
         self['comment'] = comment
 
     def update_unchecked(self, comment='no expected_outputs list for '
                                        'completed node'):
+        # update no configured expected outputs: ambiguous success.
         self['node_status'] = Status.states['unchecked']
         self['comment'] = comment
 
     def succeeded(self):
+        """
+        returns boolean if stage successful or if ambiguous (no expected 
+        outputs configured)
+        """
         return self['node_status'] in (Status.states['succeeded'],
                                        Status.states['unchecked'])
 
@@ -342,6 +369,9 @@ class Stage(object):
     ignore_expected_outputs = False
 
     def __init__(self, config):
+        """
+        :param config: instance of ParameterSettings
+        """
         self.config = config
         self.kwargs = config.get_params()
         self.status = Status(self._get_log_dir())
@@ -362,21 +392,22 @@ class Stage(object):
 
     @classmethod
     def deactivate_runtime_calls(cls):
-        """
-        prevents Stage(s) from executing subprocesses
-        """
+        # prevent stages (all subclasses) from executing subprocesses
         cls.call_active = False
 
     @classmethod
     def deactivate_check_expected_outputs(cls):
+        # prevent stages (all subclasses) from checking expected outputs
         cls.check_expected_outputs_active = False
 
     @classmethod
     def deactivate_remove_expected_outputs(cls):
+        # prevent stages (all subclasses) from removing expected outputs
         cls.remove_expected_outputs_active = False
 
     @classmethod
     def activate_ignore_expected_outputs(cls):
+        # stages will not terminate even if missing expected outputs
         cls.ignore_expected_outputs = True
 
     def _get_log_dir(self):
@@ -874,7 +905,7 @@ class DCANBOLDProcessing(Stage):
         cmd += ' --teardown'
 
         for fmriset in fmrisets:
-            fmrilist = sorted([ fmri for fmri in fmris if fmriset in fmri ])
+            fmrilist = sorted([fmri for fmri in fmris if fmriset in fmri])
             cmd += ' --tasklist ' + ','.join(fmrilist)
 
         log_dir = self._get_log_dir()
@@ -894,6 +925,25 @@ class DCANBOLDProcessing(Stage):
         script = self.script.format(**os.environ)
         for argset in self.args:
             yield ' '.join((script, argset))
+
+class DiffusionPreprocessing(Stage):
+
+    script = '{HCPPIPEDIR}/DiffusionPreprocessing/DiffPreprocPipeline.sh'
+
+    spec = ' --path={path}' \
+           ' --subject={subject}' \
+           ' --posData={dwi_positive}' \
+           ' --negData={dwi_negative}' \
+           ' --echospacing={dwi_echospacing}' \
+           ' --PEdir={pedir}' \
+           ' --printcom={printcom}'
+
+    @property
+    def args(self):
+        raise NotImplemented
+
+    def cmdline(self):
+        raise NotImplemented
 
 
 class ExecutiveSummary(Stage):

@@ -79,6 +79,12 @@ def read_bids_dataset(bids_input, subject_list=None, collect_on_subject=False):
 
 
 def set_anatomicals(layout, subject, sessions):
+    """
+    returns dictionary of anatomical (T1w, T2w) filepaths and associated
+    metadata.
+    :param subject: participant labels.
+    :param sessions: iterable of session labels.
+    """
     t1ws = layout.get(subject=subject, session=sessions, modality='anat',
                       type='T1w', extensions='.nii.gz')
     t1w_metadata = layout.get_metadata(t1ws[0].filename)
@@ -99,6 +105,11 @@ def set_anatomicals(layout, subject, sessions):
 
 
 def set_functionals(layout, subject, sessions):
+    """
+    returns dictionary of bold filepaths and associated metadata.
+    :param subject: participant labels.
+    :param sessions: iterable of session labels.
+    """
     func = layout.get(subject=subject, session=sessions, modality='func',
                       type='bold', extensions='.nii.gz')
     func_metadata = [layout.get_metadata(x.filename) for x in func]
@@ -111,6 +122,12 @@ def set_functionals(layout, subject, sessions):
 
 
 def set_fieldmaps(layout, subject, sessions):
+    """
+    returns dictionary of fieldmap (epi or magnitude) filepaths and 
+    associated metadata.
+    :param subject: participant labels.
+    :param sessions: iterable of session labels.
+    """
     fmap = layout.get(subject=subject, session=sessions, modality='fmap',
                       extensions='.nii.gz')
     fmap_metadata = [layout.get_metadata(x.filename) for x in fmap]
@@ -154,7 +171,7 @@ def get_readoutdir(metadata):
     # readout direction is opposite the in plane phase encoding direction
     if ped == 'ROW':
         readoutvec = iopd[3:]
-    elif ped == 'COLUMN':
+    elif ped == 'COL':
         readoutvec = iopd[:3]
     else:
         raise ValueError('phase encoding direction not recognized: ' + ped)
@@ -193,7 +210,7 @@ def get_relpath(filename):
     sessions_dir = os.path.dirname(types_dir)
     subject_dir = os.path.dirname(sessions_dir)
 
-    return os.path.relpath(filename,subject_dir)
+    return os.path.relpath(filename, subject_dir)
 
 
 def get_fmriname(filename):
@@ -235,3 +252,22 @@ def ijk_to_xyz(vec, patient_orientation=None):
             'i-': 'x-', 'j-': 'y-', 'k-': 'z-',
             '-i': 'x-', '-j': 'y-', '-k': 'z-'}
     return vmap[vec]
+
+
+def validate_config(bids_spec, ignore_modalities):
+    """
+    function for all preliminary data checks.
+    :param bids_spec: spec returned from get_bids_data
+    :param kwargs: any relevant arguments from command line inputs.
+    """
+    modes = bids_spec['types']
+    t1w = 'T1w' in modes
+    func = 'bold' in modes
+    dwi = 'dwi' in modes
+    assert t1w, 'T1w image not found!'
+    assert func or 'func' in ignore_modalities, 'must provide functional ' \
+                                                'data or specify --ignore func'
+    if dwi:
+        print('WARNING: dwi preprocessing pipeline is not yet implemented! '
+              'Skipping dwi...')
+
