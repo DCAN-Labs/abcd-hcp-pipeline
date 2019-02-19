@@ -1,13 +1,13 @@
 import inspect
 import json
 import multiprocessing as mp
-import re
 import subprocess
 
 import os
 
-from helpers import (get_fmriname, get_readoutdir, get_relpath,
-                     get_taskname, ijk_to_xyz)
+from helpers import (get_fmriname, get_readoutdir, get_realdwelltime,
+                     get_relpath, get_taskname, ijk_to_xyz)
+
 
 class ParameterSettings(object):
     """
@@ -57,7 +57,7 @@ class ParameterSettings(object):
     # smoothing sigma for final greyordinate data (mm)
     smoothingFWHM = 2
     # surface registration algorithm, one of: FS, MSMSulc
-    regname = "FS"
+    regname = "MSMSulc"
     # number of vertices (in thousands) for high and low res surface meshes
     hiresmesh = "164"
     lowresmesh = "32"
@@ -83,8 +83,8 @@ class ParameterSettings(object):
     # motion regressor bandstop filter parameters
     motion_filter_type = 'notch'
     motion_filter_order = 4
-    band_stop_min = 18.582
-    band_stop_max = 25.7263
+    band_stop_min = None
+    band_stop_max = None
     motion_filter_option = 5
     # seconds to omit from beginning of scan
     skip_seconds = 5
@@ -100,22 +100,16 @@ class ParameterSettings(object):
 
         # input bids data struct
         self.bids_data = bids_data
-
         # @ parameters read from bids @ #
         self.t1w = self.bids_data['t1w']
-        self.t1samplespacing = \
-            '%.12f' % self.bids_data['t1w_metadata']['DwellTime']
-        self.t1samplespacing = self.t1samplespacing.rstrip('0')
-
-        bids_root = self.t1w[0].split('/')[:-4]
-        self.unproc='/'.join(bids_root)
+        self.t1samplespacing = get_realdwelltime(
+            self.bids_data['t1w_metadata'])
 
         if 'T2w' in self.bids_data['types']:
             self.useT2 = 'true'
             self.t2w = self.bids_data['t2w']
-            self.t2samplespacing = \
-                '%.12f' % self.bids_data['t2w_metadata']['DwellTime']
-            self.t2samplespacing = self.t2samplespacing.rstrip('0')
+            self.t2samplespacing = get_realdwelltime(
+                self.bids_data['t2w_metadata'])
         else:
             self.useT2 = 'false'
             self.t2w = []
@@ -131,13 +125,18 @@ class ParameterSettings(object):
                 'EffectiveEchoSpacing']
             self.echospacing = ('%.12f' % self.echospacing).rstrip('0')
             # distortion correction phase encoding direction
-            self.seunwarpdir = ijk_to_xyz(
-                self.bids_data['func_metadata']['PhaseEncodingDirection'])
+            if self.bids_data['func']:
+                self.seunwarpdir = ijk_to_xyz(
+                    self.bids_data['func_metadata']['PhaseEncodingDirection'])
+            else:
+                # if no functional data is provided, use positive spin echo
+                self.seunwarpdir = ijk_to_xyz(
+                    self.bids_data['fmap_metadata']['positive'][0][
+                        'PhaseEncodingDirection'])
 
             # set unused fmap parameters to none
             self.fmapmag = self.fmapphase = self.fmapgeneralelectric = \
                 self.echodiff = self.gdcoeffs = None
-            # @TODO decide on bfcmethod for fmri data.
 
         elif 'magnitude' in self.bids_data['types']:
             self.dcmethod = 'FIELDMAP'
@@ -154,10 +153,19 @@ class ParameterSettings(object):
                 self.seunwarpdir = self.echospacing = None
 
         if not hasattr(self, 'fmribfcmethod'):
-            self.fmribfcmethod = None
+            self.fmribfcmethod = None  # this parameter has not been validated
+
+        # dwi parameters
+        if 'dwi' in self.bids_data['types']:
+            pass
 
         # @TODO handle bids formatted physio data
         self.physio = None
+
+        # intermediate template defaults
+        self.usestudytemplate = "false"
+        self.studytemplate = None
+        self.studytemplatebrain = None
 
         # @ output files @ #
         self.path = os.path.join(output_directory, 'files')
@@ -165,17 +173,26 @@ class ParameterSettings(object):
         self.subject = self.bids_data['subject']
         self.session = self.bids_data['session']
 
-        deriv_root = self.path.split('/')[:-3]
-        self.deriv = '/'.join(deriv_root)
+        # Exec summ doesn't need this anymore. KJS 11/6/18
+        #deriv_root = self.path.split('/')[:-3]
+        #self.deriv = '/'.join(deriv_root)
 
+        # @ input files @ #
+        session_root = '/'.join(self.t1w[0].split('/')[:-2])
+        self.unproc = os.path.join(session_root, 'func')
+
+        bids_input_root = '/'.join(session_root.split('/')[:-2])
+        self.sourcedata_root = os.path.join(bids_input_root,'sourcedata')
 
         # print command for HCP
         self.printcom = ''
 
     def __getitem__(self, item):
+        # item getter
         return self._params()[item]
 
     def __setitem__(self, key, value):
+        # item setter
         setattr(self, key, value)
 
     def _params(self):
@@ -218,6 +235,17 @@ class ParameterSettings(object):
             val = val[arg]
         return val
 
+    def set_study_template(self, study_template, study_template_brain):
+        """
+        set template for intermediate registration steps.
+        :param study_template: intermediate registration template head.
+        :param study_template_brain: intermediate registration template brain.
+        :return: None
+        """
+        self.usestudytemplate = "true"
+        self.studytemplate = study_template
+        self.studytemplatebrain = study_template_brain
+
 
 class Status(object):
     """Status provides and updates node status information.
@@ -239,8 +267,7 @@ class Status(object):
 
     def __init__(self, folder_path):
         """
-        Args:
-            folder_path (str): absolute path to the Stage's bookkeeping
+        param folder_path (str): absolute path to the Stage's bookkeeping
             (e.g. /output/sub/ses/processing_logs/PipelineStage)
         """
         self.file_path = os.path.join(folder_path, Status.name)
@@ -255,10 +282,12 @@ class Status(object):
             self._write_dict(**defaults)
 
     def __getitem__(self, key):
+        # item getter
         with open(self.file_path, 'r') as fd:
             return json.load(fd)[key]
 
     def __setitem__(self, key, value):
+        # item setter
         with open(self.file_path, 'r') as fd:
             store = json.load(fd)
         store[key] = value
@@ -266,30 +295,45 @@ class Status(object):
         return value
 
     def _write_dict(self, **contents):
+        """
+        write status dictionary to status.json in Stage log folder.
+        """
         with open(self.file_path, 'w') as fd:
             json.dump(contents, fd, indent=4)
 
     def increment_run(self):
+        # tic runs up, should be called on stage start.
         self['num_runs'] += 1
 
     def update_start_run(self):
+        # reset node_status to incomplete when stage begins
         self.increment_run()
         self['node_status'] = Status.states['incomplete']
 
     def update_success(self):
+        # update successful completion of stage
         self['node_status'] = Status.states['succeeded']
         self['comment'] = ''
 
     def update_failure(self, comment=''):
+        """
+        update stage failed.
+        :param comment: optional comment describing failure.
+        """
         self['node_status'] = Status.states['failed']
         self['comment'] = comment
 
     def update_unchecked(self, comment='no expected_outputs list for '
                                        'completed node'):
+        # update no configured expected outputs: ambiguous success.
         self['node_status'] = Status.states['unchecked']
         self['comment'] = comment
 
     def succeeded(self):
+        """
+        returns boolean if stage successful or if ambiguous (no expected 
+        outputs configured)
+        """
         return self['node_status'] in (Status.states['succeeded'],
                                        Status.states['unchecked'])
 
@@ -318,7 +362,16 @@ class Stage(object):
     run: not intended for override.
     """
 
+    # runtime settings
+    call_active = True
+    check_expected_outputs_active = True
+    remove_expected_outputs_active = True
+    ignore_expected_outputs = False
+
     def __init__(self, config):
+        """
+        :param config: instance of ParameterSettings
+        """
         self.config = config
         self.kwargs = config.get_params()
         self.status = Status(self._get_log_dir())
@@ -337,6 +390,26 @@ class Stage(object):
             string = ' \\\n    '.join(cmdline.split())
         return string
 
+    @classmethod
+    def deactivate_runtime_calls(cls):
+        # prevent stages (all subclasses) from executing subprocesses
+        cls.call_active = False
+
+    @classmethod
+    def deactivate_check_expected_outputs(cls):
+        # prevent stages (all subclasses) from checking expected outputs
+        cls.check_expected_outputs_active = False
+
+    @classmethod
+    def deactivate_remove_expected_outputs(cls):
+        # prevent stages (all subclasses) from removing expected outputs
+        cls.remove_expected_outputs_active = False
+
+    @classmethod
+    def activate_ignore_expected_outputs(cls):
+        # stages will not terminate even if missing expected outputs
+        cls.ignore_expected_outputs = True
+
     def _get_log_dir(self):
         """
         returns the subject's log directory for this stage
@@ -352,6 +425,9 @@ class Stage(object):
         checks the existence of the expected outputs for this stage.
         :return: True if all outputs exist, else False.
         """
+        if not self.check_expected_outputs_active:
+            return True
+
         outputs = self.get_expected_outputs()
         checklist = [os.path.exists(p) for p in outputs]
         if not all(checklist):
@@ -360,7 +436,8 @@ class Stage(object):
             dne_list = [f for i, f in enumerate(outputs) if not checklist[i]]
             for f in dne_list:
                 print('file not found: %s' % f)
-            return False
+            if self.ignore_expected_outputs:
+                return False
 
         return True
 
@@ -390,6 +467,8 @@ class Stage(object):
         removes expected outputs for this stage if they exist.
         :return: None
         """
+        if not self.remove_expected_outputs:
+            return
         outputs = self.get_expected_outputs()
         checklist = [os.path.isfile(p) for p in outputs]
         if any(checklist):
@@ -471,7 +550,6 @@ class Stage(object):
         if inspect.isgeneratorfunction(self.cmdline):
             cmdlist = []
             for cmd in self.cmdline():
-                print(cmd)
                 log_dir = self._get_log_dir()
                 out_log = os.path.join(log_dir,
                                        self.kwargs['fmriname'] + '.out')
@@ -479,14 +557,23 @@ class Stage(object):
                                        self.kwargs['fmriname'] + '.err')
                 cmdlist.append((cmd, out_log, err_log))
             with mp.Pool(processes=ncpus) as pool:
-                result = pool.starmap(_call, cmdlist)
+                result = pool.starmap(self.call, cmdlist)
         else:
             cmd = self.cmdline()
             log_dir = self._get_log_dir()
             out_log = os.path.join(log_dir, self.__class__.__name__ + '.out')
             err_log = os.path.join(log_dir, self.__class__.__name__ + '.err')
-            result = _call(cmd, out_log, err_log, num_threads=ncpus)
+            result = self.call(cmd, out_log, err_log, num_threads=ncpus)
         self.teardown(result)
+
+    def call(self, *args, **kwargs):
+        """
+        runs command if call is active.
+        """
+        if self.call_active:
+            return _call(*args, **kwargs)
+        else:
+            return 0  # "success"
 
 
 class PreFreeSurfer(Stage):
@@ -522,7 +609,10 @@ class PreFreeSurfer(Stage):
            ' --avgrdcmethod={dcmethod}' \
            ' --topupconfig={topupconfig}' \
            ' --useT2={useT2}' \
-           ' --printcom={printcom}'
+           ' --printcom={printcom}' \
+           ' --useStudyTemplate={usestudytemplate}' \
+           ' --StudyTemplate={studytemplate}' \
+           ' --StudyTemplateBrain={studytemplatebrain}'
 
     def __init__(self, config):
         super(__class__, self).__init__(config)
@@ -532,6 +622,8 @@ class PreFreeSurfer(Stage):
         if self.kwargs['dcmethod'] == 'TOPUP':
             self.kwargs['sephasepos'], self.kwargs['sephaseneg'] = \
                 self._get_intended_sefmaps()
+        else:
+            self.kwargs['sephasepos'] = self.kwargs['sephaseneg'] = None
 
     def _get_intended_sefmaps(self):
         """
@@ -540,22 +632,25 @@ class PreFreeSurfer(Stage):
         includes the substring "T1w" in a spin echo sidecar name.
         :return: pair of spin echos, parallel
         """
-        if '-' in self.kwargs['seunwarpdir']:
-            parallel = 'negative'
-        else:
-            parallel = 'positive'
 
-        for idx, sefm in enumerate(self.config.get_bids('fmap_metadata',
-                                                     parallel)):
-            intended_targets = sefm.get('IntendedFor', [])
-            if 'T1w' in ' '.join(intended_targets):
-                intended_idx = idx
-                break
+        intended_idx = {}
+        for direction in ['positive', 'negative']:
+            for idx, sefm in enumerate(self.config.get_bids('fmap_metadata',
+                                                        direction)):
+                intended_targets = sefm.get('IntendedFor', [])
+                if 'T1w' in ' '.join(intended_targets):
+                    intended_idx[direction] = idx
+                    break
             else:
-                intended_idx = 0
+                if idx != 1:
+                    print('WARNING: the intended %s spin echo for anatomical '
+                          'distortion correction is not explicitly defined in '
+                          'the sidecar json.' % direction)
+                intended_idx[direction] = 0
 
-        return self.config.get_bids('fmap', 'positive', intended_idx), \
-            self.config.get_bids('fmap', 'negative', intended_idx)
+        return self.config.get_bids('fmap', 'positive', intended_idx[
+            'positive']), \
+            self.config.get_bids('fmap', 'negative', intended_idx['negative'])
 
     @property
     def args(self):
@@ -653,7 +748,8 @@ class FMRIVolume(Stage):
            ' --topupconfig={topupconfig}' \
            ' --printcom={printcom}' \
            ' --biascorrection={fmribfcmethod}' \
-           ' --mctype={mctype}'
+           ' --mctype={mctype}' \
+           ' --useT2={useT2}'
 
     def __init__(self, config):
         super(__class__, self).__init__(config)
@@ -670,23 +766,26 @@ class FMRIVolume(Stage):
         appropriate field map pair, else give the first spin echo pair.
         :return: pair of spin echo filenames, positive then negative
         """
-        if '-' in self.kwargs['seunwarpdir']:
-            parallel = 'negative'
-        else:
-            parallel = 'positive'
-
-        for idx, sefm in enumerate(self.config.get_bids('fmap_metadata',
-                                                     parallel)):
-            intended_targets = sefm.get('IntendedFor', [])
-            if get_relpath(self.kwargs['fmritcs']) in ' '.join(
-                    intended_targets):
-                intended_idx = idx
-                break
+        intended_idx = {}
+        for direction in ['positive', 'negative']:
+            for idx, sefm in enumerate(self.config.get_bids('fmap_metadata',
+                                                            direction)):
+                intended_targets = sefm.get('IntendedFor', [])
+                if get_relpath(self.kwargs['fmritcs']) in ' '.join(
+                        intended_targets):
+                    intended_idx[direction] = idx
+                    break
             else:
-                intended_idx = 0
+                if idx != 1:
+                    print('WARNING: the intended %s spin echo for anatomical '
+                          'distortion correction is not explicitly defined in '
+                          'the sidecar json.' % direction)
+                intended_idx[direction] = 0
 
-        return self.config.get_bids('fmap', 'positive', intended_idx), \
-            self.config.get_bids('fmap', 'negative', intended_idx)
+        return self.config.get_bids('fmap', 'positive', intended_idx[
+            'positive']), \
+               self.config.get_bids('fmap', 'negative',
+                                    intended_idx['negative'])
 
     @property
     def args(self):
@@ -698,6 +797,8 @@ class FMRIVolume(Stage):
             if self.kwargs['dcmethod'] == 'TOPUP':
                 self.kwargs['sephasepos'], self.kwargs['sephaseneg'] = \
                     self._get_intended_sefmaps()
+            else:
+                self.kwargs['sephasepos'] = self.kwargs['sephaseneg'] = None
             # None to NONE
             kw = {k: (v if v is not None else "NONE")
                   for k, v in self.kwargs.items()}
@@ -786,7 +887,7 @@ class DCANBOLDProcessing(Stage):
         log_dir = self._get_log_dir()
         out_log = os.path.join(log_dir, self.__class__.__name__ + '_setup.out')
         err_log = os.path.join(log_dir, self.__class__.__name__ + '_setup.err')
-        result = _call(cmd, out_log, err_log)
+        result = self.call(cmd, out_log, err_log)
 
     def teardown(self, result=0):
         """
@@ -794,8 +895,9 @@ class DCANBOLDProcessing(Stage):
         :param result:
         :return:
         """
-        fmris = [ get_fmriname(fmri) for fmri in self.config.get_bids('func') ]
-        fmrisets = list(set([ get_taskname(fmri) for fmri in self.config.get_bids('func') ]))
+        fmris = [get_fmriname(fmri) for fmri in self.config.get_bids('func')]
+        fmrisets = list(set([get_taskname(fmri)
+                              for fmri in self.config.get_bids('func')]))
 
         script = self.script.format(**os.environ)
         args = self.spec.format(**self.kwargs)
@@ -803,13 +905,13 @@ class DCANBOLDProcessing(Stage):
         cmd += ' --teardown'
 
         for fmriset in fmrisets:
-            fmrilist = sorted([ fmri for fmri in fmris if fmriset in fmri ])
+            fmrilist = sorted([fmri for fmri in fmris if fmriset in fmri])
             cmd += ' --tasklist ' + ','.join(fmrilist)
 
         log_dir = self._get_log_dir()
         out_log = os.path.join(log_dir, self.__class__.__name__ + '_teardown.out')
         err_log = os.path.join(log_dir, self.__class__.__name__ + '_teardown.err')
-        result = _call(cmd, out_log, err_log)
+        result = self.call(cmd, out_log, err_log)
 
         super(__class__, self).teardown(result)
 
@@ -824,15 +926,33 @@ class DCANBOLDProcessing(Stage):
         for argset in self.args:
             yield ' '.join((script, argset))
 
+class DiffusionPreprocessing(Stage):
+
+    script = '{HCPPIPEDIR}/DiffusionPreprocessing/DiffPreprocPipeline.sh'
+
+    spec = ' --path={path}' \
+           ' --subject={subject}' \
+           ' --posData={dwi_positive}' \
+           ' --negData={dwi_negative}' \
+           ' --echospacing={dwi_echospacing}' \
+           ' --PEdir={pedir}' \
+           ' --printcom={printcom}'
+
+    @property
+    def args(self):
+        raise NotImplemented
+
+    def cmdline(self):
+        raise NotImplemented
+
 
 class ExecutiveSummary(Stage):
 
     script = '{EXECSUMDIR}/summary_tools/executivesummary_wrapper.sh'
 
     spec = ' --unproc_root={unproc}' \
-           ' --deriv_root={deriv}' \
+           ' --deriv_root={path}' \
            ' --subject_id={subject}' \
-           ' --visit={session}' \
            ' --ex_summ_dir={summary_dir}'
 
     def __init__(self, config):
@@ -841,6 +961,23 @@ class ExecutiveSummary(Stage):
     @property
     def args(self):
         return self.spec.format(**self.kwargs)
+
+
+class CustomClean(Stage):
+
+    script = '{CUSTOMCLEANDIR}/cleaning_script.py'
+
+    spec = ' --dir={path}' \
+           ' --json={input_json}'
+
+    def __init__(self, config, input_json):
+        super(__class__, self).__init__(config)
+        self.kwargs['input_json'] = input_json
+
+    @property
+    def args(self):
+        return self.spec.format(**self.kwargs)
+
 
 def _call(cmd, out_log, err_log, num_threads=1):
     env = os.environ.copy()
@@ -854,3 +991,4 @@ def _call(cmd, out_log, err_log, num_threads=1):
             if all(v == 0 for v in result):
                 result = 0
     return result
+
