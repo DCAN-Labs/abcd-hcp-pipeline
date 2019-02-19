@@ -171,7 +171,7 @@ def get_readoutdir(metadata):
     # readout direction is opposite the in plane phase encoding direction
     if ped == 'ROW':
         readoutvec = iopd[3:]
-    elif ped == 'COLUMN':
+    elif ped == 'COL':
         readoutvec = iopd[:3]
     else:
         raise ValueError('phase encoding direction not recognized: ' + ped)
