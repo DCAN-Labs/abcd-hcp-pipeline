@@ -715,6 +715,7 @@ class PostFreeSurfer(Stage):
            ' --t2template2mm={t2template2mm}' \
            ' --templatemask={templatemask}' \
            ' --template2mmmask={template2mmmask}' \
+           ' --useStudyTemplate={usestudytemplate}' \
            ' --printcom={printcom}'
 
     def __init__(self, config):

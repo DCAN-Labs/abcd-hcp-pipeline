@@ -271,3 +271,14 @@ def validate_config(bids_spec, ignore_modalities):
         print('WARNING: dwi preprocessing pipeline is not yet implemented! '
               'Skipping dwi...')
 
+def validate_license(freesurfer_license):
+    fshome = os.environ['FREESURFER_HOME']
+    license_txt = os.path.join(fshome, 'license.txt')
+    if freesurfer_license is None:
+        assert os.path.exists(license_txt), \
+            'freesurfer license.txt not located. You can provide a license ' \
+            'file using the --freesurfer-license <LICENSE> argument.'
+    else:
+        import shutil
+        shutil.copy(freesurfer_license, license_txt)
+

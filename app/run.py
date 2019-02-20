@@ -28,7 +28,7 @@ __version__ = "1.0.1"
 import argparse
 import os
 
-from helpers import read_bids_dataset, validate_config
+from helpers import read_bids_dataset, validate_config, validate_license
 from pipelines import (ParameterSettings, PreFreeSurfer, FreeSurfer,
                        PostFreeSurfer, FMRIVolume, FMRISurface,
                        DCANBOLDProcessing, ExecutiveSummary, CustomClean,
@@ -58,7 +58,8 @@ def _cli():
         'cleaning_json': args.cleaning_json,
         'print_commands': args.print,
         'ignore_expected_outputs': args.ignore_expected_outputs,
-        'ignore_modalities': args.ignore
+        'ignore_modalities': args.ignore,
+        'freesurfer_license': args.freesurfer_license
     }
 
     return interface(**kwargs)
@@ -97,6 +98,14 @@ def generate_parser(parser=None):
         help='optional list of participant ids to run. Default is all ids '
              'found under the bids input directory.  A participant label '
              'does not include "sub-"'
+    )
+    parser.add_argument(
+        '--freesurfer-license', dest='freesurfer_license', 
+        metavar='LICENSE_FILE',
+        help='if using docker or singularity, you will need to acquire and '
+             'provide your own freesurfer license. The license can be '
+             'acquired by filling out this form: '
+             'https://surfer.nmr.mgh.harvard.edu/registration.html'
     )
     parser.add_argument(
         '--all-sessions', dest='collect', action='store_true',
@@ -178,7 +187,7 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
               start_stage=None, bandstop_params=None, check_only=False,
               run_abcd_task=False, study_template=None, cleaning_json=None,
               print_commands=False, ignore_expected_outputs=False, 
-              ignore_modalities=[]):
+              ignore_modalities=[], freesufer_license=None):
     """
     main application interface
     :param bids_dir: input bids dataset see "helpers.read_bids_dataset" for
@@ -193,6 +202,8 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
     :param check_only: check expected outputs for each stage then terminate
     :return:
     """
+    if not check_only or not print_commands:
+        validate_license(freesurfer_license)
     # read from bids dataset
     assert os.path.isdir(bids_dir), bids_dir + ' is not a directory!'
     if not os.path.isdir(output_dir):

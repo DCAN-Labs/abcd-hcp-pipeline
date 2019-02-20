@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. /SetupEnv.sh
+. /app/SetupEnv.sh
 cd /tmp
 exec python3 /app/run.py "$@"
 
