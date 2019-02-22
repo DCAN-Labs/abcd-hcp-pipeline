@@ -244,6 +244,7 @@ COPY ["app", "/app"]
 RUN python3 -m pip install -r /app/requirements.txt
 # setup entrypoint
 COPY ["./entrypoint.sh", "/entrypoint.sh"]
+COPY ["LICENSE", "/LICENSE"]
 ENTRYPOINT ["/entrypoint.sh"]
 WORKDIR /
 CMD ["--help"]
