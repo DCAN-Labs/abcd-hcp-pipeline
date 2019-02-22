@@ -226,7 +226,7 @@ RUN git clone https://github.com/DCAN-Labs/dcan_bold_processing.git dcan_bold_pr
 # dcan executive summary
 RUN git clone https://github.com/DCAN-Labs/ExecutiveSummary.git executivesummary
 # dcan custom clean
-RUN git clone https://github.com/DCAN-Labs/CustomClean.git cclean
+RUN git clone https://github.com/DCAN-Labs/CustomClean.git customclean
 # abcd task prep
 RUN git clone https://github.com/DCAN-Labs/abcd_task_prep.git ABCD_tfMRI
 
