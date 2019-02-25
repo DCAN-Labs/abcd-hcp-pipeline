@@ -1,66 +1,30 @@
-# dcan bids fmri-pipeline
+# ABCD-HCP BIDS fMRI Pipeline
 
-This software takes a bids folder as input and determines parameters
-for the dcan lab's modified hcp pipeline, calling upon the proper code
+This software takes a BIDS folder as input and determines parameters
+for the DCAN Labs' modified HCP pipeline, calling upon the proper code
 to run the subject(s).
 
 ### Installation
 
 #### Using Docker
 
-Until we release the image officially on docker hub, we will provide you with 
-a tar.gz docker image upon request. you will need to load the image onto your 
-docker service before continuing.  Run the following command using the image:
+You will need to load the image onto your docker service by running the following command:
 
 ```{bash}
-docker load < dcan-pipelines.tar.gz
+docker pull dcanlabs/abcd-hcp-pipeline
 ```
 
-It is common to receive a "no space left on device" error during this build 
-process. You man need to clean up any old/dangling images and containers from 
-the docker registry, and possibly increase the amount of space allotted to 
-docker.
+It is common to receive a "no space left on device" error during this pull process. You may need to clean up any old/dangling images and containers from the docker registry, and possibly increase the amount of space allocated to Docker.
 
 #### Using Singularity
 
-Until we release the image officially on docker hub, we will provide you with
-a .img singularity image.  No installation is necessary, this image will be 
-provided directly to the singularity service whenever executing the pipeline.
-
-#### Without Using Docker (Native)
-
-If you wish to use this package without docker, you will need to meet the 
-current version requirements of each software package contained in the 
-version of the dcan pipeline code which you are using.  Note that the version 
-of this software is independent of the version of pipeline code, but should be 
-compatible with pipeline-code version 2.0 and onward.
-
-
-```{bash}
-# clone the repository
-# SSH:
-git clone git@gitlab.com:Fair_lab/bidsapp.git
-# HTTPS:
-git clone https://gitlab.com/Fair_lab/bidsapp.git
-
-# change directory into the repository's folder
-cd bidsapp
-
-# install the requirements from within the cloned repository for the user
-pip3 install --user -r requirements.txt
-```
-
-You will then need to modify the "SetupEnv.sh" file and set the system paths 
-to any software dependencies within.
+Reach out to us and we can provide you with a `.img` singularity image.  No installation is necessary, this image will be provided directly to the singularity service whenever executing the pipeline.
 
 ### Usage:
 
-Using the image will require bids formatted input data. Consult 
-http://bids.neuroimaging.io/ for more information and for tools which assist 
-with converting data into bids format.
+Using the image will require BIDS formatted input data. Consult http://bids.neuroimaging.io/ for more information and for tools which assist with converting data into BIDS format. Our favorite is [Dcm2Bids](https://github.com/cbedetti/Dcm2Bids).
 
-These are the basic command invocations.  Options are detailed in the usage
-below.
+These are the minimal command invocations.  Options are detailed in the usage below.
 
 To call using docker:
 
@@ -68,7 +32,7 @@ To call using docker:
 docker run --rm \
     -v /path/to/bids_dataset:/bids_input:ro \
     -v /path/to/outputs:/output \
-    dcan-pipelines /bids_input /output [OPTIONS]
+    dcanlabs/abcd-hcp-pipeline /bids_input /output [OPTIONS]
 ```
 
 To call using singularity:
@@ -77,23 +41,17 @@ To call using singularity:
 singularity run \
     -B /path/to/bids_dataset:/bids_input \
     -B /path/to/outputs:/output \
-    ./dcan-pipelines.img /bids_input /output [OPTIONS]
+    ./abcd-hcp-pipeline.img /bids_input /output [OPTIONS]
 ```
 
-To call a native installation:
-
-```{bash}
-source ./SetupEnv.sh
-./run.py /bids_input /output [OPTIONS]
-```
-
-Options:
+### Options:
 
 ```{bash}
 usage: dcan-pipelines [-h] [--version] [--participant-label ID [ID ...]]
-                      [--all-sessions] [--ncpus NCPUS] [--stage STAGE]
-                      [--bandstop LOWER UPPER] [--custom-clean JSON]
-                      [--abcd-task] [--study-template HEAD BRAIN]
+                      [--freesurfer-license LICENSE_FILE] [--all-sessions]
+                      [--ncpus NCPUS] [--stage STAGE] [--bandstop LOWER UPPER]
+                      [--custom-clean JSON] [--abcd-task]
+                      [--study-template HEAD BRAIN] [--ignore {func,dwi}]
                       [--check-outputs-only] [--print-commands-only]
                       [--ignore-expected-outputs]
                       bids_dir output_dir
@@ -121,6 +79,11 @@ optional arguments:
                         optional list of participant ids to run. Default is
                         all ids found under the bids input directory. A
                         participant label does not include "sub-"
+  --freesurfer-license LICENSE_FILE
+                        if using docker or singularity, you will need to
+                        acquire and provide your own freesurfer license. The
+                        license can be acquired by filling out this form:
+                        https://surfer.nmr.mgh.harvard.edu/registration.html
   --all-sessions        collapses all sessions into one when running a
                         subject.
   --ncpus NCPUS         number of cores to use for concurrent processing and
@@ -156,6 +119,8 @@ special pipeline options:
                         nonlinear registration, effective where population
                         differs greatly from average adult, e.g. in elderly
                         populations with large ventricles.
+  --ignore {func,dwi}   ignore a modality in processing. Option can be
+                        repeated.
 
 runtime options:
   special changes to runtime behaviors. Debugging features.
@@ -186,30 +151,25 @@ Neuroinform. 2014 Apr 28;8:44. doi: 10.3389/fninf.2014.00044. eCollection 2014.
 
 #### Example
 
-Running a subject with a bandstop filter and study-templates
+##### Running a subject with FreeSurfer, a bandstop filter, and study-templates
 
-first, ensure that you have constructed a bids\_input folder which conforms to 
-bids specifications.  You may use 
-[dcm2bids](https://github.com/cbedetti/Dcm2Bids) for this purpose.
+First ensure that you have constructed a `bids_input` folder which conforms to BIDS specifications.  You may use [Dcm2Bids](https://github.com/cbedetti/Dcm2Bids) for this purpose.
 
-for study templates, we will mount an additional path into the docker 
-container which contains these extra files: study\_head.nii.gz, and 
-study\_brain.nii.gz
-
+For study templates we will mount an additional path into the Docker container which contains these extra files: `study_head.nii.gz`, and `study_brain.nii.gz`.
 
 ```{bash}
 docker run --rm \
     -v  /path/to/bids_dataset:/bids_input:ro \
     -v /path/to/outputs:/output \
-    -v /path/to/template/folder:/atlases
-    dcan-pipelines /bids_input /output \
-        --bandstop 18.582 25.726 
+    -v /path/to/freesurfer/LICENSE:/license:ro \
+    -v /path/to/template/folder:/atlases \
+    dcanlabs/abcd-hcp-pipeline /bids_input /output \
+        --freesurfer-license /license \
+        --bandstop 18.582 25.726 \
         --study-template /atlases/study_head.nii.gz /atlases/study_brain.nii.gz
 ```
 
-note that the mount flag "-v" follows "docker run", as it is a docker option, 
-whereas the "--bandstop" and "--study-template" flags follow "dcan-pipelines", 
-as they are options passed into this program.
+Note that the mount flag `-v` follows `docker run`, as it is a Docker option, whereas the `--freesurfer-license`, `--bandstop`, and `--study-template` flags follow `dcanlabs/abcd-hcp-pipeline`, as they are options passed into this pipeline.
 
 
 ### Additional Information:
@@ -218,33 +178,36 @@ as they are options passed into this program.
 
 The outputs are organized in the following structure:
 
-output_dir/sub-id/ses-session/
-- files/
-- logs/
+```
+output_dir/
+|__ sub-id
+    |__ ses-session
+        |__ files
+        |   |__ executive_summary
+        |   |__ MNINonLinear
+        |   |   |__ fsaverage_LR32k
+        |   |   |__ Results
+        |   |__ T1w
+        |   |   |__ id
+        |   |__ task-taskname
+        |__ logs
+```
 
 ##### files
 
-- T1w:  contains native space anatomical data as well as intermediate 
-preprocessing files. 
-- T1w/participantID: The participant ID folder within T1w is the FreeSurfer 
-subject folder. 
-- MNINonLinear: contains the final space results of anatomy in 164k 
-resolution. 
-- MNINonLinear/Results: final space functional data.
-- MNINonLinear/fsaverage_32K: final space anatomy in 32k resolution, where 
-functional data is ultimately projected.
-- task-taskname: these folders contain intermediate functional preprocessing 
-files.
-- executive_summary: the .html file within can be opened for quality 
-inspection of pipeline results.
+- `executive_summary`: The .html file within can be opened for quality inspection of pipeline results.
+- `MNINonLinear`: Contains the final space results of anatomy in 164k resolution.
+- `MNINonLinear/fsaverage_LR32k`: Final space anatomy in 32k resolution, where functional data is ultimately projected.
+- `MNINonLinear/Results`: Final space functional data.
+- `T1w`: Contains native space anatomical data as well as intermediate preprocessing files.
+- `T1w/id`: The participant ID folder within T1w is the FreeSurfer subject folder.
+- `task-taskname`: These folders contain intermediate functional preprocessing files.
 
 ##### logs
 
-logs contains the log files for each stage. In the case of an error, consult 
-these files *in addition to* the standard err/out of the app itself (by 
-default this is printed to the command line).
+`logs` contains the log files for each stage. In the case of an error, consult these files *in addition to* the standard error and standard output of the app itself (by default this is printed to the command line).
 
-status.json codes:
+`status.json` codes:
 
 - unchecked: 999
 - succeeded: 1
@@ -255,69 +218,34 @@ status.json codes:
 
 #### Rerunning
 
-The --stage option exists so you can restart the pipeline in the case that 
-it terminated prematurely
+The `--stage` option exists so you can restart the pipeline from a specific stage in the case that it terminates prematurely.
 
 #### Special Pipelines
 
-The special pipeline options are designed for use with specific data sets. 
+The special pipeline options are designed for use with specific data sets.
 
-If you are using an elderly or neurodegenerative population, adding a 
-"study template" tends to improve results. This is generally constructed 
-using ANTs to build an average template of your subjects. This template is 
-then used as an intermediate warp stage, assisting in nonlinear registration 
-of subjects with large ventricles.
+If you are using an elderly or neurodegenerative population, adding a "study template" tends to improve results. This is generally constructed using ANTs to build an average template of your subjects. This template is then used as an intermediate warp stage, assisting in nonlinear registration of subjects with large ventricles.
 
-It should be noted that "abcd-task" is not compatible with a bids folder 
-structure, and an actual task module will be added in a future version which 
-will allow bids formatted task data to be processed automatically.
+It should be noted that `abcd-task` is not compatible with a BIDS folder structure, and a compatible task module will be added in a future version which will allow BIDS formatted task data to be processed automatically.
 
 #### Misc.
 
-The pipeline may take over 24 hours if run on a single core.  It is 
-recommended to use at least 4 cores and allow for at least 12GB of memory to 
-be safe.  Most fMRI processing can be done in parallel, so using a number of 
-cores which divides your number of fMRI runs is optimal.
+The pipeline may take over 24 hours if run on a single core.  It is recommended to use at least 4 cores and allow for at least 12GB of memory total (so at least 3GB per core) to be safe.  Most fMRI processing can be done in parallel, so using a number of cores which evenly divides your number of fMRI runs is optimal.
 
-Temporary/Scratch space:  By default, everything is processed in the 
-output folder. We will work on a more efficient use of disk space in the 
-future, along with the ability to use a temporary file system mount for
-hot read/writes.
+Temporary/Scratch space:  By default everything is processed in the output folder. We will work on a more efficient use of disk space in the future, along with the ability to use a temporary file system mount for hot read/writes.
 
-software will resolve to using spin echo field maps if they are present, 
-then gradient field maps, then None, consistent with best observed
-performances. Note that there are no errors or warnings if multiple 
-modalities are present.
+This software will resolve to using spin echo field maps if they are present, then gradient field maps, then None, consistent with best observed performances. Note that there are no errors or warnings if multiple modalities are present.
 
-For specified use of spin echo field maps, i.e. mapping a pair to each
-individual functional run, it is necessary to insert the "IntendedFor"
-field into the bids input sidecar jsons, which specifies a functional
-run for each field map.  This field is explained in greater detail
-within the bids specification.
+For specified use of spin echo field maps, i.e. mapping a pair to each individual functional run, it is necessary to insert the `IntendedFor` field into the BIDS input sidecar JSONs, which specifies which functional run(s) a field map is intended for.  This field is explained in greater detail within the BIDS specification.
 
-In the case of multiband (fast TR) data, it is recommended to employ a
-band-stop filter to mitigate artifactually high motion numbers.  The
-band-stop filter used on motion regressors prior to frame-wise
-displacement calculation has parameters which must be chosen based on
-subject respiratory rate.
+In the case of multiband (fast TR) data, it is recommended to employ a band-stop filter to mitigate artifactually high motion numbers.  The band-stop filter used on motion regressors prior to frame-wise displacement calculation has parameters which should be chosen based on subject respiratory rate.
 
 #### Some current limitations
 
-diffusion field maps are still a work in progress, as this data differs
-significantly between scanner make/model. We will happily add new formats 
-to the pipeline, so please post an issue if you run into fieldmap trouble.
+Diffusion field maps are still a work in progress, as this data differs significantly between scanner make/model. We will happily add new formats to the pipeline, so please post an issue if you run into field map trouble.
 
-DTI processing is to be included in a future release. Demand for this 
-feature would speed up its release.
+DWI processing is to be included in a future release. Demand for this feature would speed up its release.
 
-The ideal motion filtering parameters have not been robustly tested
-across repetition times or populations outside of adolescents.
-Additionally, automatic reading of physio data from bids format has not
-yet been implemented, so the proper range should be decided upon carefully.
-Consult [3] in the usage for more information.
+The ideal motion filtering parameters have not been robustly tested across repetition times or populations outside of adolescents. Additionally, automatic reading of physio data from BIDS format has not yet been implemented, so the proper range should be decided upon carefully. Consult reference [3] in the usage for more information.
 
-software does not currently support dynamic acquisition parameters for
-a single modality (e.g. different phase encoding direction for 2 fmri).
-Other parameters would have to be processed by creating separate bids
-datasets for sessions with varied fmri parameters.
-
+Software does not currently support dynamic acquisition parameters for a single modality (e.g. different phase encoding directions for two fMRI series, like Left-to-Right and Right-to-Left). Other parameters would have to be processed by creating separate BIDS datasets for sessions with varied fMRI parameters.
