@@ -118,13 +118,16 @@ class ParameterSettings(object):
         # distortion correction method: TOPUP, FIELDMAP, or NONE, inferred
         # from files, defaults to spin echo (topup) if both field maps exist
         self.unwarpdir = get_readoutdir(self.bids_data['t1w_metadata'])
+        fmap_types = {'magnitude', 'magnitude1', 'magnitude2', 'phasediff',
+                 'phase1', 'phase2', 'fieldmap'}
         if 'epi' in self.bids_data['types']:
             self.dcmethod = 'TOPUP'
             # spin echo field map spacing @TODO read during volume per fmap?
             self.echospacing = self.bids_data['fmap_metadata']['positive'][0][
                 'EffectiveEchoSpacing']
             self.echospacing = ('%.12f' % self.echospacing).rstrip('0')
-            # distortion correction phase encoding direction
+            # distortion correction phase encoding direction 
+            # somewhat arbitrary in PreFreeSurfer
             if self.bids_data['func']:
                 self.seunwarpdir = ijk_to_xyz(
                     self.bids_data['func_metadata']['PhaseEncodingDirection'])
@@ -138,13 +141,30 @@ class ParameterSettings(object):
             self.fmapmag = self.fmapphase = self.fmapgeneralelectric = \
                 self.echodiff = self.gdcoeffs = None
 
-        elif 'magnitude' in self.bids_data['types']:
+        elif fmap_types.intersection(set(self.bids_data['types'])):
             self.dcmethod = 'FIELDMAP'
+            types = self.bids_data['fmap'].keys()
             # gradient field map delta TE
-            self.echodiff = None  # @TODO
+            if 'magnitude1' in types and 'magnitude2' in types:
+                self.fmapmag = self.bids_data['fmap']['magnitude1']
+                self.echodiff = self.bids_data['fmap_metadata'][
+                    'magnitude2']['EchoTime'] - self.bids_data[
+                    'fmap_metadata']['magnitude1']['EchoTime']
+                self.echodiff = '%g' % (self.echodiff * 1000.)  # milliseconds
+                self.fmapgeneralelectric = None
+            elif 'magnitude' in types:
+                raise NotImplementedError
+            else:
+                raise Exception('No FM magnitude image identified')
 
+            if 'phasediff' in types:
+                self.fmapphase = self.bids_data['fmap']['phasediff']
+            elif 'phase1' in types and 'phase2' in types:
+                raise NotImplementedError
+            else:
+                raise Exception('No FM phase image identified')
             # set unused spin echo parameters to none
-            self.seunwarpdir = None
+            self.seunwarpdir = self.gdcoeffs = self.echospacing = None
 
         else:
             # all distortion correction parameters set to none
@@ -777,7 +797,7 @@ class FMRIVolume(Stage):
                     intended_idx[direction] = idx
                     break
             else:
-                if idx != 1:
+                if idx != 0:
                     print('WARNING: the intended %s spin echo for anatomical '
                           'distortion correction is not explicitly defined in '
                           'the sidecar json.' % direction)
@@ -790,12 +810,15 @@ class FMRIVolume(Stage):
 
     @property
     def args(self):
-        for fmri in self.config.get_bids('func'):
+        for fmri, meta in zip(self.config.get_bids('func'), 
+                              self.config.get_bids('func_metadata')):
             # set ts parameters
             self.kwargs['fmritcs'] = fmri
             self.kwargs['fmriname'] = get_fmriname(fmri)
             self.kwargs['fmriscout'] = None  # not implemented
             if self.kwargs['dcmethod'] == 'TOPUP':
+                self.kwargs['seunwarpdir'] = ijk_to_xyz(
+                    meta['PhaseEncodingDirection'])
                 self.kwargs['sephasepos'], self.kwargs['sephaseneg'] = \
                     self._get_intended_sefmaps()
             else:

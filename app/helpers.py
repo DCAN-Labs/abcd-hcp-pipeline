@@ -116,7 +116,7 @@ def set_functionals(layout, subject, sessions):
 
     spec = {
         'func': [f.filename for f in func],
-        'func_metadata': func_metadata[0]
+        'func_metadata': func_metadata
     }
     return spec
 
