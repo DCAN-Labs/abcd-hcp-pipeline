@@ -223,12 +223,14 @@ WORKDIR /opt/dcan-tools
 RUN git clone https://github.com/DCAN-Labs/DCAN-HCP.git /opt/pipeline
 # dcan bold processing
 RUN git clone https://github.com/DCAN-Labs/dcan_bold_processing.git dcan_bold_proc
-# dcan executive summary
-RUN git clone https://github.com/DCAN-Labs/ExecutiveSummary.git executivesummary
 # dcan custom clean
 RUN git clone https://github.com/DCAN-Labs/CustomClean.git customclean
 # abcd task prep
 RUN git clone https://github.com/DCAN-Labs/abcd_task_prep.git ABCD_tfMRI
+# dcan executive summary
+RUN git clone https://github.com/DCAN-Labs/ExecutiveSummary.git executivesummary
+# unzip template file
+RUN gunzip /opt/dcan-tools/executivesummary/summary_tools/templates/parasagittal_Tx_169_template.scene.gz
 
 # unless otherwise specified...
 ENV OMP_NUM_THREADS=1
