@@ -6,57 +6,68 @@ to run the subject(s).
 
 ### Installation
 
+In order to run this software via a container, you will need to acquire a copy of the FreeSurfer License for yourself. 
+
+[Follow this link for a FreeSurfer License](https://surfer.nmr.mgh.harvard.edu/fswiki/License)
+
 #### Using Docker
 
-You will need to load the image onto your docker service by running the following command:
+Before running, you will need to load the image onto your Docker service by running the following command:
 
 ```{bash}
 docker pull dcanlabs/abcd-hcp-pipeline
 ```
 
-It is common to receive a "no space left on device" error during this pull process. You may need to clean up any old/dangling images and containers from the docker registry, and possibly increase the amount of space allocated to Docker.
+If you receive a "no space left on device" error during this pull process.
+You may need to clean up any old/dangling images and containers from the docker registry, and possibly increase the amount of space allocated to Docker.
 
 #### Using Singularity
 
-Reach out to us and we can provide you with a `.img` singularity image.  No installation is necessary, this image will be provided directly to the singularity service whenever executing the pipeline.
+You can either pull the image from the Docker repository, or build it from the repository for the image to be saved in the working directory.
+
+```{bash}
+singularity pull docker://dcanlabs/abcd-hcp-pipeline
+
+singularity build abcd-hcp-pipeline.img docker://dcanlabs/abcd-hcp-pipeline
+```
+
+These are essentially the same, but in the latter case you have control over the name of the file.
 
 ### Usage:
 
-Using the image will require BIDS formatted input data. Consult http://bids.neuroimaging.io/ for more information and for tools which assist with converting data into BIDS format. Our favorite is [Dcm2Bids](https://github.com/cbedetti/Dcm2Bids).
+Using the image will require BIDS formatted input data.
+Consult http://bids.neuroimaging.io/ for more information and for tools which assist with converting data into BIDS format.
+Our favorite is [Dcm2Bids](https://github.com/cbedetti/Dcm2Bids).
 
-These are the minimal command invocations.  Options are detailed in the usage below.
+These are the minimal command invocations.
+Options are detailed in the usage below.
 
-To call using docker:
+To call using Docker:
 
 ```{bash}
 docker run --rm \
     -v /path/to/bids_dataset:/bids_input:ro \
     -v /path/to/outputs:/output \
-    dcanlabs/abcd-hcp-pipeline /bids_input /output [OPTIONS]
+    -v /path/to/freesurfer/license:/license
+    dcanlabs/abcd-hcp-pipeline /bids_input /output --freesurfer-license=/license [OPTIONS]
 ```
 
-To call using singularity:
+To call using Singularity:
 
 ```{bash}
 singularity run \
     -B /path/to/bids_dataset:/bids_input \
     -B /path/to/outputs:/output \
-    ./abcd-hcp-pipeline.img /bids_input /output [OPTIONS]
+    -B /path/to/freesurfer/license:/license
+    ./abcd-hcp-pipeline.img /bids_input /output --freesurfer-license=/license [OPTIONS]
 ```
 
 ### Options:
 
 ```{bash}
-usage: dcan-pipelines [-h] [--version] [--participant-label ID [ID ...]]
-                      [--freesurfer-license LICENSE_FILE] [--all-sessions]
-                      [--ncpus NCPUS] [--stage STAGE] [--bandstop LOWER UPPER]
-                      [--custom-clean JSON] [--abcd-task]
-                      [--study-template HEAD BRAIN] [--ignore {func,dwi}]
-                      [--check-outputs-only] [--print-commands-only]
-                      [--ignore-expected-outputs]
-                      bids_dir output_dir
+usage: abcd-hcp-pipeline bids\_dir output\_dir --freesurfer-license=<LICENSE>
 
-The Developmental Cognition and Neuroimaging (DCAN) lab fMRI Pipeline [1].
+The Developmental Cognition and Neuroimaging (DCAN) Labs fMRI Pipeline [1].
 This BIDS application initiates a functional MRI processing pipeline built
 upon the Human Connectome Project's minimal processing pipelines [2].  The
 application requires only a dataset conformed to the BIDS specification, and
@@ -64,78 +75,78 @@ little-to-no additional configuration on the part of the user. BIDS format
 and applications are explained in detail at http://bids.neuroimaging.io/
 
 positional arguments:
-  bids_dir              path to the input bids dataset root directory. Read
-                        more about bids format in the link in the description.
-                        It is recommended to use the dcan bids gui or dcm2bids
-                        to convert from participant dicoms to bids.
-  output_dir            path to the output directory for all intermediate and
-                        output files from the pipeline, also path in which
+  bids_dir              Path to the input BIDS dataset root directory. Read
+                        more about the BIDS standard in the link in the
+                        description. It is recommended to use Dcm2Bids to
+                        convert from participant dicoms into BIDS format.
+  output_dir            Path to the output directory for all intermediate and
+                        output files from the pipeline, which is also where
                         logs are stored.
 
 optional arguments:
   -h, --help            show this help message and exit
   --version, -v         show program's version number and exit
   --participant-label ID [ID ...]
-                        optional list of participant ids to run. Default is
-                        all ids found under the bids input directory. A
-                        participant label does not include "sub-"
+                        Optional list of participant IDs to run. Default is
+                        all IDs found under the BIDS input directory. The
+                        participant label does not include the "sub-" prefix
   --freesurfer-license LICENSE_FILE
-                        if using docker or singularity, you will need to
-                        acquire and provide your own freesurfer license. The
+                        If using docker or singularity, you will need to
+                        acquire and provide your own FreeSurfer license. The
                         license can be acquired by filling out this form:
                         https://surfer.nmr.mgh.harvard.edu/registration.html
-  --all-sessions        collapses all sessions into one when running a
+  --all-sessions        Collapses all sessions into one when running a
                         subject.
-  --ncpus NCPUS         number of cores to use for concurrent processing and
+  --ncpus NCPUS         Number of cores to use for concurrent processing and
                         algorithmic speedups. Warning: causes ANTs and
                         FreeSurfer to produce non-deterministic results.
-  --stage STAGE         begin from a given stage, continuing through. Options:
+  --stage STAGE         Begin from a given stage, continuing through. Options:
                         PreFreeSurfer, FreeSurfer, PostFreeSurfer, FMRIVolume,
                         FMRISurface, DCANBOLDProcessing, ExecutiveSummary,
                         CustomClean
   --bandstop LOWER UPPER
-                        parameters for motion regressor band-stop filter. It
+                        Parameters for motion regressor band-stop filter. It
                         is recommended for the boundaries to match the inter-
                         quartile range for participant group respiratory rate
-                        (bpm), or to match bids physio data directly [3].
-                        These parameters are highly recommended for data
-                        acquired with a frequency of approx. 1 Hz or more
-                        (TR<=1.0). Default is no filter
+                        (breaths per minute), or to match bids physio data
+                        directly [3]. These parameters are highly recommended
+                        for data acquired with a frequency of approx. 1 Hz or
+                        more (TR<=1.0). Default is no filter.
 
-special pipeline options:
-  options which pertain to an alternative pipeline or an extra stage which is not
-   inferred from the bids data.
+Special pipeline options:
+  Options which pertain to an alternative pipeline or an extra stage which is not
+   inferred from the BIDS data.
 
-  --custom-clean JSON   runs dcan cleaning script after the pipeline
+  --custom-clean JSON   Runs DCAN cleaning script after the pipeline
                         completessuccessfully to delete pipeline outputs based
                         on the file structure specified in the custom-clean
-                        json.
-  --abcd-task           runs abcd task data through task fmri analysis, adding
+                        JSON. Required for the custom clean stage.
+  --abcd-task           Runs ABCD task data through task fMRI analysis, adding
                         this stage to the end. Warning: Not written for
                         general use: a general task analysis module will be
                         included in a future release.
   --study-template HEAD BRAIN
-                        template head and brain images for intermediate
-                        nonlinear registration, effective where population
-                        differs greatly from average adult, e.g. in elderly
-                        populations with large ventricles.
-  --ignore {func,dwi}   ignore a modality in processing. Option can be
+                        Template head and brain images for intermediate
+                        nonlinear registration and masking, effective where
+                        population differs greatly from average adult, e.g. in
+                        elderly populations with large ventricles.
+  --ignore {func,dwi}   Ignore a modality in processing. Option can be
                         repeated.
 
-runtime options:
-  special changes to runtime behaviors. Debugging features.
+Runtime options:
+  Special changes to runtime behaviors. Debugging features.
 
-  --check-outputs-only  checks for the existence of outputs for each stage
+  --check-outputs-only  Checks for the existence of outputs for each stage
                         then exit. Useful for debugging.
   --print-commands-only
-                        print run commands for each stage to shell then exit.
+                        Print run commands for each stage to shell then exit.
   --ignore-expected-outputs
-                        continues pipeline even if some expected outputs are
+                        Continues pipeline even if some expected outputs are
                         missing.
 
 References
 ----------
-[1] dcan-pipelines (for now, please cite [3] in use of this software)
+[1] abcd-hcp-pipeline (for now, please cite [3] in use of this software)
 [2] Glasser, MF. et al. The minimal preprocessing pipelines for the Human
 Connectome Project. Neuroimage. 2013 Oct 15;80:105-24.
 10.1016/j.neuroimage.2013.04.127
@@ -153,9 +164,20 @@ Neuroinform. 2014 Apr 28;8:44. doi: 10.3389/fninf.2014.00044. eCollection 2014.
 
 ##### Running a subject with FreeSurfer, a bandstop filter, and study-templates
 
-First ensure that you have constructed a `bids_input` folder which conforms to BIDS specifications.  You may use [Dcm2Bids](https://github.com/cbedetti/Dcm2Bids) for this purpose.
+First ensure that you have constructed a `bids_input` folder which conforms to BIDS specifications.
+You may use [Dcm2Bids](https://github.com/cbedetti/Dcm2Bids) for this purpose.
 
-For study templates we will mount an additional path into the Docker container which contains these extra files: `study_head.nii.gz`, and `study_brain.nii.gz`.
+The code block below shows an example of using some advanced arguments.
+
+We have defined a bandstop filter `--bandstop 18.582 25.726` for motion numbers, where our subject demographic have respiratory rates between 18 and 25 breaths per minute.
+This is the interquartile range (25th percentile and 75th percentile), not the absolute range.
+
+For study templates we will mount an additional path into the Docker container `-v /path/to/template/folder:/atlases`,
+ which contains these extra files: `study_head.nii.gz`, and `study_brain.nii.gz`.
+Then, we add these templates in as the study template head and brain `--study-template /atlases/study_head.nii.gz /atlases/study_brain.nii.gz` using the path as mounted into the Docker container `/atlases`.
+
+We have also requested 4 cores for faster processing `--ncpus 4`
+
 
 ```{bash}
 docker run --rm \
@@ -166,10 +188,11 @@ docker run --rm \
     dcanlabs/abcd-hcp-pipeline /bids_input /output \
         --freesurfer-license /license \
         --bandstop 18.582 25.726 \
-        --study-template /atlases/study_head.nii.gz /atlases/study_brain.nii.gz
+        --study-template /atlases/study_head.nii.gz /atlases/study_brain.nii.gz \
+        --ncpus 4
 ```
 
-Note that the mount flag `-v` follows `docker run`, as it is a Docker option, whereas the `--freesurfer-license`, `--bandstop`, and `--study-template` flags follow `dcanlabs/abcd-hcp-pipeline`, as they are options passed into this pipeline.
+Note that the mount flag `-v` follows `docker run`, as it is a Docker option, whereas the `--freesurfer-license`, `--bandstop`, and `--study-template` flags follow `dcanlabs/abcd-hcp-pipeline`, as they are options passed into this pipeline and documented in the usage above.
 
 
 ### Additional Information:
