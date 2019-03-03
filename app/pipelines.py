@@ -129,8 +129,9 @@ class ParameterSettings(object):
             # distortion correction phase encoding direction 
             # somewhat arbitrary in PreFreeSurfer
             if self.bids_data['func']:
+                # take phase encoding direction from first functional.
                 self.seunwarpdir = ijk_to_xyz(
-                    self.bids_data['func_metadata']['PhaseEncodingDirection'])
+                    self.bids_data['func_metadata'][0]['PhaseEncodingDirection'])
             else:
                 # if no functional data is provided, use positive spin echo
                 self.seunwarpdir = ijk_to_xyz(
