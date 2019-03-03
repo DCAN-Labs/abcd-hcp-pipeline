@@ -48,7 +48,7 @@ To call using Docker:
 docker run --rm \
     -v /path/to/bids_dataset:/bids_input:ro \
     -v /path/to/outputs:/output \
-    -v /path/to/freesurfer/license:/license
+    -v /path/to/freesurfer/license:/license \
     dcanlabs/abcd-hcp-pipeline /bids_input /output --freesurfer-license=/license [OPTIONS]
 ```
 
@@ -58,7 +58,7 @@ To call using Singularity:
 singularity run \
     -B /path/to/bids_dataset:/bids_input \
     -B /path/to/outputs:/output \
-    -B /path/to/freesurfer/license:/license
+    -B /path/to/freesurfer/license:/license \
     ./abcd-hcp-pipeline.img /bids_input /output --freesurfer-license=/license [OPTIONS]
 ```
 
