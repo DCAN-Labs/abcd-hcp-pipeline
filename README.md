@@ -18,8 +18,8 @@ Before running, you will need to load the image onto your Docker service by runn
 docker pull dcanlabs/abcd-hcp-pipeline
 ```
 
-If you receive a "no space left on device" error during this pull process.
-You may need to clean up any old/dangling images and containers from the docker registry, and possibly increase the amount of space allocated to Docker.
+If you receive a "no space left on device" error during this pull process,
+you may need to clean up any old/dangling images and containers from the docker registry, and possibly increase the amount of space allocated to Docker.
 
 #### Using Singularity
 
@@ -118,9 +118,9 @@ Special pipeline options:
    inferred from the BIDS data.
 
   --custom-clean JSON   Runs DCAN cleaning script after the pipeline
-                        completessuccessfully to delete pipeline outputs based
-                        on the file structure specified in the custom-clean
-                        JSON. Required for the custom clean stage.
+                        completes successfully to delete pipeline outputs 
+                        base on the file structure specified in the custom-
+                        clean JSON. Required for the custom clean stage.
   --abcd-task           Runs ABCD task data through task fMRI analysis, adding
                         this stage to the end. Warning: Not written for
                         general use: a general task analysis module will be
