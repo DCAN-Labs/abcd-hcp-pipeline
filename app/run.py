@@ -78,6 +78,7 @@ def generate_parser(parser=None):
             formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog=__references__,
             usage='%(prog)s bids_dir output_dir --freesurfer-license=<LICENSE>'
+                  ' [OPTIONS]'
         )
     parser.add_argument(
         'bids_dir',
@@ -110,7 +111,9 @@ def generate_parser(parser=None):
     )
     parser.add_argument(
         '--all-sessions', dest='collect', action='store_true',
-        help='Collapses all sessions into one when running a subject.'
+        help='Collapses all sessions into one when running a subject, '
+             'essentially treating data as if it were collected during a '
+             'single session (per subject).'
     )
     parser.add_argument(
         '--ncpus', type=int, default=1,
@@ -141,7 +144,7 @@ def generate_parser(parser=None):
     )
     extras.add_argument(
         '--custom-clean', metavar='JSON', dest='cleaning_json',
-        help='Runs DCAN cleaning script after the pipeline completes'
+        help='Runs DCAN cleaning script after the pipeline completes '
              'successfully to delete pipeline outputs based on '
              'the file structure specified in the custom-clean JSON. '
              'Required for the custom clean stage.'
