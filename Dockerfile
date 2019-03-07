@@ -221,15 +221,15 @@ RUN ln -sf /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.24 /opt/mcr/v91/sys/os/gln
 RUN mkdir /opt/dcan-tools
 WORKDIR /opt/dcan-tools
 # dcan hcp code
-RUN git clone https://github.com/DCAN-Labs/DCAN-HCP.git /opt/pipeline
+RUN git clone -b 'v2.0.0' --single-branch --depth 1 https://github.com/DCAN-Labs/DCAN-HCP.git /opt/pipeline
 # dcan bold processing
-RUN git clone https://github.com/DCAN-Labs/dcan_bold_processing.git dcan_bold_proc
+RUN git clone -b 'v4.0.0' --single-branch --depth 1 https://github.com/DCAN-Labs/dcan_bold_processing.git dcan_bold_proc
 # dcan custom clean
-RUN git clone https://github.com/DCAN-Labs/CustomClean.git customclean
+RUN git clone -b 'v0.0.0' --single-branch --depth 1 https://github.com/DCAN-Labs/CustomClean.git customclean
 # abcd task prep
-RUN git clone https://github.com/DCAN-Labs/abcd_task_prep.git ABCD_tfMRI
+RUN git clone -b 'v0.0.0' --single-branch --depth 1 https://github.com/DCAN-Labs/abcd_task_prep.git ABCD_tfMRI
 # dcan executive summary
-RUN git clone https://github.com/DCAN-Labs/ExecutiveSummary.git executivesummary
+RUN git clone -b 'v0.0.0' --single-branch --depth 1 https://github.com/DCAN-Labs/ExecutiveSummary.git executivesummary
 # unzip template file
 RUN gunzip /opt/dcan-tools/executivesummary/summary_tools/templates/parasagittal_Tx_169_template.scene.gz
 
