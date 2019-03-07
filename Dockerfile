@@ -126,6 +126,7 @@ RUN echo "Downloading FreeSurfer ..." \
     && sed -i '$isource $FREESURFER_HOME/SetUpFreeSurfer.sh' $ND_ENTRYPOINT
 
 ENV FREESURFER_HOME=/opt/freesurfer
+RUN chmod 777 /opt/freesurfer
 
 #-----------------------------------------------------------
 # Install FSL v5.0.10
