@@ -278,6 +278,8 @@ def validate_license(freesurfer_license):
         assert os.path.exists(license_txt), \
             'freesurfer license.txt not located. You can provide a license ' \
             'file using the --freesurfer-license <LICENSE> argument.'
+    elif os.path.normpath(license_txt) == os.path.normpath(freesurfer_license):
+        pass
     else:
         import shutil
         shutil.copy(freesurfer_license, license_txt)
