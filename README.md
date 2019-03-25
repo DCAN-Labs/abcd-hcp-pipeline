@@ -55,12 +55,15 @@ docker run --rm \
 To call using Singularity:
 
 ```{bash}
-singularity run \
+env -i singularity run \
     -B /path/to/bids_dataset:/bids_input \
     -B /path/to/outputs:/output \
-    -B /path/to/freesurfer/license:/license \
-    ./abcd-hcp-pipeline.img /bids_input /output --freesurfer-license=/license [OPTIONS]
+    -B /path/to/freesurfer/license.txt:/opt/freesurfer/license.txt \
+    ./abcd-hcp-pipeline.img /bids_input /output --freesurfer-license=/opt/freesurfer/license.txt [OPTIONS]
 ```
+
+notice that the license is now mounted directly into the freesurfer folder, 
+and the call to singularity is prefaced by "env -i"
 
 ### Options:
 
