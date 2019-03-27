@@ -10,7 +10,9 @@ and applications are explained in detail at http://bids.neuroimaging.io/
 __references__ = \
 """References
 ----------
-[1] abcd-hcp-pipeline (for now, please cite [3] in use of this software)
+[1] Sturgeon, D., Perrone, A., Earl, E., & Snider, K. 
+DCAN_Labs/abcd-hcp-pipeline. DOI: 10.5281/zenodo.2587209. (check on 
+zenodo.org for a version-specific DOI/citation)
 [2] Glasser, MF. et al. The minimal preprocessing pipelines for the Human
 Connectome Project. Neuroimage. 2013 Oct 15;80:105-24.
 10.1016/j.neuroimage.2013.04.127

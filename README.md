@@ -1,5 +1,7 @@
 # ABCD-HCP BIDS fMRI Pipeline
 
+[![DOI](https://zenodo.org/badge/171551109.svg)](https://zenodo.org/badge/latestdoi/171551109)
+
 This software takes a BIDS folder as input and determines parameters
 for the DCAN Labs' modified HCP pipeline, calling upon the proper code
 to run the subject(s).
@@ -149,7 +151,9 @@ Runtime options:
 
 References
 ----------
-[1] abcd-hcp-pipeline (for now, please cite [3] in use of this software)
+[1] Sturgeon, D., Perrone, A., Earl, E., & Snider, K. 
+DCAN_Labs/abcd-hcp-pipeline. DOI: 10.5281/zenodo.2587209. (check on 
+zenodo.org for a version-specific DOI/citation)
 [2] Glasser, MF. et al. The minimal preprocessing pipelines for the Human
 Connectome Project. Neuroimage. 2013 Oct 15;80:105-24.
 10.1016/j.neuroimage.2013.04.127
