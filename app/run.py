@@ -10,8 +10,8 @@ and applications are explained in detail at http://bids.neuroimaging.io/
 __references__ = \
 """References
 ----------
-[1] Sturgeon, D., Perrone, A., Earl, E., & Snider, K. 
-DCAN_Labs/abcd-hcp-pipeline. DOI: 10.5281/zenodo.2587209. (check on 
+[1] Sturgeon, D., Perrone, A., Earl, E., & Snider, K.
+DCAN_Labs/abcd-hcp-pipeline. DOI: 10.5281/zenodo.2587209. (check on
 zenodo.org for a version-specific DOI/citation)
 [2] Glasser, MF. et al. The minimal preprocessing pipelines for the Human
 Connectome Project. Neuroimage. 2013 Oct 15;80:105-24.
@@ -52,7 +52,7 @@ def _cli():
         'subject_list': args.subject_list,
         'collect': args.collect,
         'ncpus': args.ncpus,
-        'start_stage': args.stage,
+        'stages': args.stages,
         'bandstop_params': args.bandstop,
         'check_only': args.check_outputs_only,
         'run_abcd_task': args.abcd_task,
@@ -104,7 +104,7 @@ def generate_parser(parser=None):
              'does not include the "sub-" prefix'
     )
     parser.add_argument(
-        '--freesurfer-license', dest='freesurfer_license', 
+        '--freesurfer-license', dest='freesurfer_license',
         metavar='LICENSE_FILE',
         help='If using docker or singularity, you will need to acquire and '
              'provide your own FreeSurfer license. The license can be '
@@ -124,8 +124,33 @@ def generate_parser(parser=None):
              'produce non-deterministic results.'
     )
     parser.add_argument(
-        '--stage',
-        help='Begin from a given stage, continuing through.  Options: '
+        '--stage','--stages', dest='stages',
+        help='specify a subset of stages to run.'
+             'If a single stage name is given, the pipeline with be '
+             'started at that stage. If a string with a ":" is given, '
+             'a stage name before the ":" will tell run.py where to '
+             'start and a stage name after the ":" will tell it where '
+             'to stop. If no ":" is found, the pipeline will start '
+             'with the stage specified and run to the end. '
+             'Calling run.py with: \n'
+             '   --stage="PreFreeSurfer:PreFreeSurfer"  \n'
+             'or with: \n'
+             '   --stage=":PreFreeSurfer"  \n'
+             'will cause only PreFreeSurfer to be run. '
+             '(This can be useful to do optional processing between'
+             'PreFreeSurfer and FreeSurfer.)'
+             'Calling run.py with: \n'
+             '   --stages="FreeSurfer:FMRISurface"  \n'
+             'will start with stage FreeSurfer and stop after'
+             'FMRISurface (before DCANBOLDProcessing).'
+             'Default start is PreFreeSurfer and default '
+             'stop is ExecutiveSummary. The specifications: \n'
+             '   --stages="PreFreeSurfer:ExecutiveSummary"  \n'
+             '   --stages=":ExecutiveSummary"  \n'
+             '   --stages="PreFreeSurfer:"  \n'
+             'are exactly identical to each other and to sending '
+             'no --stage argument. '
+             'Valid stage names: '
              'PreFreeSurfer, FreeSurfer, PostFreeSurfer, FMRIVolume, '
              'FMRISurface, DCANBOLDProcessing, ExecutiveSummary, CustomClean'
     )
@@ -191,9 +216,9 @@ def generate_parser(parser=None):
 
 
 def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
-              start_stage=None, bandstop_params=None, check_only=False,
+              stages=None, bandstop_params=None, check_only=False,
               run_abcd_task=False, study_template=None, cleaning_json=None,
-              print_commands=False, ignore_expected_outputs=False, 
+              print_commands=False, ignore_expected_outputs=False,
               ignore_modalities=[], freesurfer_license=None):
     """
     main application interface
@@ -204,7 +229,7 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
     "helpers.read_bids_dataset" for more information.
     :param collect: treats each subject as having only one session.
     :param ncpus: number of cores for parallelized processing.
-    :param start_stage: start from a given stage.
+    :param stages: only run a subset of stages.
     :param bandstop_params: tuple of lower and upper bound for stop-band filter
     :param check_only: check expected outputs for each stage then terminate
     :return:
@@ -274,12 +299,39 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
             cclean = CustomClean(session_spec, cleaning_json)
             order.append(cclean)
 
-        if start_stage:
+        if stages:
+            # User can indicate start or end or both; default
+            # to entire list built above.
+            start_idx = 0
+            end_idx = len(order)
+
+            idx_colon = stages.find(":")
+            if idx_colon > -1:
+                # Start stage is everything before the colon.
+                start_stage = stages[:idx_colon]
+                # End stage is everything after the colon.
+                end_stage = stages[(idx_colon+1):]
+            else:
+                # No colon means no end stage.
+                start_stage = stages
+
             names = [x.__class__.__name__ for x in order]
-            assert start_stage in names, \
-                '"%s" is unknown, check class name and case for given stage' \
-                % start_stage
-            order = order[names.index(start_stage):]
+
+            if start_stage:
+                assert start_stage in names, \
+                        '"%s" is unknown, check class name and case for given stage' \
+                        % start_stage
+                start_idx = names.index(start_stage)
+
+            if end_stage:
+                assert end_stage in names, \
+                        '"%s" is unknown, check class name and case for given stage' \
+                        % end_stage
+                end_idx = names.index(end_stage)
+                end_idx += 1 # Include end stage.
+
+            # Slice the list.
+            order = order[start_idx:end_idx]
 
         # special runtime options
         if check_only:
