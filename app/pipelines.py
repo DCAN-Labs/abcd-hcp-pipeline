@@ -457,7 +457,7 @@ class Stage(object):
             dne_list = [f for i, f in enumerate(outputs) if not checklist[i]]
             for f in dne_list:
                 print('file not found: %s' % f)
-            if self.ignore_expected_outputs:
+            if not self.ignore_expected_outputs:
                 return False
 
         return True
