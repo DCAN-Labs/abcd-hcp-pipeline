@@ -157,13 +157,13 @@ ENV FSLDIR=/opt/fsl \
 #---------------------
 # Install MATLAB Compiler Runtime
 #---------------------
-RUN mkdir /opt/mcr /opt/mcr_download
-WORKDIR /opt/mcr_download
+RUN mkdir /opt/matlab /opt/matlab_download
+WORKDIR /opt/matlab_download
 RUN wget http://ssd.mathworks.com/supportfiles/downloads/R2016b/deployment_files/R2016b/installers/glnxa64/MCR_R2016b_glnxa64_installer.zip \
     && unzip MCR_R2016b_glnxa64_installer.zip \
-    && ./install -agreeToLicense yes -mode silent -destinationFolder /opt/mcr \
-    && rm -rf /opt/mcr_download
-#ENV LD_LIBRARY_PATH=/opt/mcr/v91/bin/glnxa64:/opt/mcr/v91/glnxa64:/opt/mcr/v91/runtime/glnxa64:$LD_LIBRARY_PATH
+    && ./install -agreeToLicense yes -mode silent -destinationFolder /opt/matlab \
+    && rm -rf /opt/matlab_download
+#ENV LD_LIBRARY_PATH=/opt/matlab/v91/bin/glnxa64:/opt/matlab/v91/glnxa64:/opt/matlab/v91/runtime/glnxa64:$LD_LIBRARY_PATH
 
 #---------------------
 # Install MSM Binaries
