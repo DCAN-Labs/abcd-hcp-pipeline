@@ -314,6 +314,7 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
             else:
                 # No colon means no end stage.
                 start_stage = stages
+                end_stage = None
 
             names = [x.__class__.__name__ for x in order]
 
