@@ -7,7 +7,7 @@
 #
 # Timestamp: 2018-03-15 20:22:57
 
-FROM ubuntu:17.10
+FROM ubuntu:18.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -yq --no-install-recommends \
         curl \
         dirmngr\
         locales \
+        gnupg2 \
         python2.7 \
         python-pip \
         rsync \
@@ -34,6 +35,7 @@ RUN apt-get update && apt-get install -yq --no-install-recommends \
         build-essential \
         libglib2.0-0 \
         python3 \
+        python3-pip \
         git \
         bc \
         dc \
@@ -55,10 +57,10 @@ RUN apt-get update && apt-get install -yq --no-install-recommends \
         && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN pip install setuptools wheel
+RUN pip3 install setuptools wheel
 RUN pip install pyyaml numpy pillow pandas
-RUN wget https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py && rm -f get-pip.py
 
-RUN wget -O- http://neuro.debian.net/lists/artful.us-ca.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
+RUN wget -O- http://neuro.debian.net/lists/bionic.us-ca.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
 RUN apt-key adv --recv-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9
 RUN apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
@@ -244,7 +246,7 @@ RUN mkdir /bids_input /output /atlases /config
 
 # include bidsapp interface
 COPY ["app", "/app"]
-RUN python3 -m pip install -r /app/requirements.txt
+RUN pip3 install -r /app/requirements.txt
 # setup entrypoint
 COPY ["./entrypoint.sh", "/entrypoint.sh"]
 COPY ["LICENSE", "/LICENSE"]
