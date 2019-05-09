@@ -38,7 +38,7 @@ export MSMBINDIR=/opt/msm/Ubuntu
 
 
 # Set up DCAN Environment Variables
-export MCRROOT=/opt/matlab/v91
+export MCRROOT=/opt/mcr/v91
 export DCANBOLDPROCDIR=/opt/dcan-tools/dcan_bold_proc
 export DCANBOLDPROCVER=DCANBOLDProc_v4.0.0
 export EXECSUMDIR=/opt/dcan-tools/executivesummary
