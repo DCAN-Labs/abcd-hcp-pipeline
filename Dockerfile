@@ -40,6 +40,8 @@ RUN apt-get update && apt-get install -yq --no-install-recommends \
         bc \
         dc \
         libgomp1 \
+        libssl1.0.0 \
+        libssl-dev \
         libxmu6 \
         libxt6 \
         libfontconfig1 \
