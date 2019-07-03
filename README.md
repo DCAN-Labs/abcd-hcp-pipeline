@@ -6,7 +6,7 @@ to run the subject(s).
 
 ### Installation
 
-In order to run this software via a container, you will need to acquire a copy of the FreeSurfer License for yourself. 
+In order to run this software via a container, you will need to acquire a copy of the FreeSurfer License for yourself. You do not need to download a copy of FreeSurfer.
 
 [Follow this link for a FreeSurfer License](https://surfer.nmr.mgh.harvard.edu/fswiki/License)
 
