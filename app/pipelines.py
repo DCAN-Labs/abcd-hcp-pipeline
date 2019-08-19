@@ -954,7 +954,8 @@ class ExecutiveSummary(Stage):
     spec = ' --unproc_root={unproc}' \
            ' --deriv_root={path}' \
            ' --subject_id={subject}' \
-           ' --ex_summ_dir={summary_dir}'
+           ' --ex_summ_dir={summary_dir}' \
+           ' --atlas={t1templatebrain}'
 
     def __init__(self, config):
         super(__class__, self).__init__(config)
