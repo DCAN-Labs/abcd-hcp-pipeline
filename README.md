@@ -70,8 +70,6 @@ and the call to singularity is prefaced by "env -i"
 ### Options:
 
 ```{bash}
-usage: abcd-hcp-pipeline bids\_dir output\_dir --freesurfer-license=<LICENSE>
-
 The Developmental Cognition and Neuroimaging (DCAN) Labs fMRI Pipeline [1].
 This BIDS application initiates a functional MRI processing pipeline built
 upon the Human Connectome Project's minimal processing pipelines [2].  The
