@@ -7,7 +7,7 @@
 #
 # Timestamp: 2018-03-15 20:22:57
 
-FROM ubuntu:17.10
+FROM ubuntu:18.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -yq --no-install-recommends \
         curl \
         dirmngr\
         locales \
+        gnupg2 \
         python2.7 \
         python-pip \
         rsync \
@@ -34,10 +35,13 @@ RUN apt-get update && apt-get install -yq --no-install-recommends \
         build-essential \
         libglib2.0-0 \
         python3 \
+        python3-pip \
         git \
         bc \
         dc \
         libgomp1 \
+        libssl1.0.0 \
+        libssl-dev \
         libxmu6 \
         libxt6 \
         libfontconfig1 \
@@ -55,10 +59,10 @@ RUN apt-get update && apt-get install -yq --no-install-recommends \
         && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN pip install setuptools wheel
+RUN pip3 install setuptools wheel
 RUN pip install pyyaml numpy pillow pandas
-RUN wget https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py && rm -f get-pip.py
 
-RUN wget -O- http://neuro.debian.net/lists/artful.us-ca.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
+RUN wget -O- http://neuro.debian.net/lists/bionic.us-ca.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
 RUN apt-key adv --recv-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9
 RUN apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
@@ -157,13 +161,13 @@ ENV FSLDIR=/opt/fsl \
 #---------------------
 # Install MATLAB Compiler Runtime
 #---------------------
-RUN mkdir /opt/mcr /opt/mcr_download
-WORKDIR /opt/mcr_download
+RUN mkdir /opt/matlab /opt/matlab_download
+WORKDIR /opt/matlab_download
 RUN wget http://ssd.mathworks.com/supportfiles/downloads/R2016b/deployment_files/R2016b/installers/glnxa64/MCR_R2016b_glnxa64_installer.zip \
     && unzip MCR_R2016b_glnxa64_installer.zip \
-    && ./install -agreeToLicense yes -mode silent -destinationFolder /opt/mcr \
-    && rm -rf /opt/mcr_download
-#ENV LD_LIBRARY_PATH=/opt/mcr/v91/bin/glnxa64:/opt/mcr/v91/glnxa64:/opt/mcr/v91/runtime/glnxa64:$LD_LIBRARY_PATH
+    && ./install -agreeToLicense yes -mode silent -destinationFolder /opt/matlab \
+    && rm -rf /opt/matlab_download
+#ENV LD_LIBRARY_PATH=/opt/matlab/v91/bin/glnxa64:/opt/matlab/v91/glnxa64:/opt/matlab/v91/runtime/glnxa64:$LD_LIBRARY_PATH
 
 #---------------------
 # Install MSM Binaries
@@ -215,7 +219,7 @@ ENV WORKBENCHDIR=/opt/workbench \
 RUN ln -s -f /lib/x86_64-linux-gnu/libz.so.1.2.11 /opt/workbench/libs_linux64/libz.so.1
 
 # Fix libstdc++6 error
-RUN ln -sf /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.24 /opt/mcr/v91/sys/os/glnxa64/libstdc++.so.6
+RUN ln -sf /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.24 /opt/matlab/v91/sys/os/glnxa64/libstdc++.so.6
 
 # add dcan dependencies
 RUN mkdir /opt/dcan-tools
@@ -244,7 +248,7 @@ RUN mkdir /bids_input /output /atlases /config
 
 # include bidsapp interface
 COPY ["app", "/app"]
-RUN python3 -m pip install -r /app/requirements.txt
+RUN pip3 install -r /app/requirements.txt
 # setup entrypoint
 COPY ["./entrypoint.sh", "/entrypoint.sh"]
 COPY ["LICENSE", "/LICENSE"]
