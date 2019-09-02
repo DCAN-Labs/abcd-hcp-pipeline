@@ -79,7 +79,7 @@ RUN apt-get clean \
 # install wb_command v1.3.2
 RUN mkdir -p /opt
 WORKDIR /opt
-RUN curl --retry 5 https://ftp.humanconnectome.org/workbench/workbench-linux64-v1.3.2.zip --output workbench-linux64-v1.3.2.zip && \
+RUN curl --retry 5 https://www.humanconnectome.org/storage/app/media/workbench/workbench-linux64-v1.3.2.zip --output workbench-linux64-v1.3.2.zip && \
   unzip workbench-linux64-v1.3.2.zip && \
   rm workbench-linux64-v1.3.2.zip
 
