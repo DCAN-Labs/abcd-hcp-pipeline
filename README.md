@@ -113,8 +113,8 @@ optional arguments:
                         quartile range for participant group respiratory rate
                         (breaths per minute), or to match bids physio data
                         directly [3]. These parameters are highly recommended
-                        for data acquired with a frequency of approx. 1 Hz or
-                        more (TR<=1.0). Default is no filter.
+                        for data acquired with a frequency of greater than 1
+                        Hz (TR less than 1 second). Default is no filter.
 
 Special pipeline options:
   Options which pertain to an alternative pipeline or an extra stage which is not
