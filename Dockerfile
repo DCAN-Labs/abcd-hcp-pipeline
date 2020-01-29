@@ -195,7 +195,7 @@ RUN rm -rf /opt/perl-5.20.3/
 # Make libnetcdf
 #---------------
 
-RUN curl -sSL --retry 5 ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-4.6.1.tar.gz | tar zx -C /opt
+RUN curl -sSL --retry 5 https://github.com/Unidata/netcdf-c/archive/v4.6.1.tar.gz | tar zx -C /opt
 WORKDIR /opt/netcdf-4.6.1/
 RUN LDFLAGS=-L/usr/local/lib && CPPFLAGS=-I/usr/local/include && ./configure --disable-netcdf-4 --disable-dap --enable-shared --prefix=/usr/local
 RUN make && make install
