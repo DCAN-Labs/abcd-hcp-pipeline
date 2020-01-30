@@ -196,12 +196,12 @@ RUN rm -rf /opt/perl-5.20.3/
 #---------------
 
 RUN curl -sSL --retry 5 https://github.com/Unidata/netcdf-c/archive/v4.6.1.tar.gz | tar zx -C /opt
-WORKDIR /opt/netcdf-4.6.1/
+WORKDIR /opt/netcdf-c-4.6.1/
 RUN LDFLAGS=-L/usr/local/lib && CPPFLAGS=-I/usr/local/include && ./configure --disable-netcdf-4 --disable-dap --enable-shared --prefix=/usr/local
 RUN make && make install
 WORKDIR /usr/local/lib
 RUN ln -s libnetcdf.so.13.1.1 libnetcdf.so.6
-RUN rm -rf /opt/netcdf-4.6.1/
+RUN rm -rf /opt/netcdf-c-4.6.1/
 ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
 #------------------------------------------
