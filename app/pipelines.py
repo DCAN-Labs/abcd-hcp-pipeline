@@ -790,18 +790,28 @@ class FMRIVolume(Stage):
         """
         intended_idx = {}
         for direction in ['positive', 'negative']:
+            foundfmap = False
             for idx, sefm in enumerate(self.config.get_bids('fmap_metadata',
                                                             direction)):
                 intended_targets = sefm.get('IntendedFor', [])
-                if get_relpath(self.kwargs['fmritcs']) in ' '.join(
-                        intended_targets):
+                # default dcm2bids doesn't create a list for a
+                # single intended target.
+                intended_targets = intended_targets if \
+                                   isinstance(intended_targets, list) else \
+                                   [intended_targets]
+                # the test could be changed to
+                # get_relpath(self.kwargs['fmritcs']) in ' '.join(intended_targets)
+                # which might be more robust if the session isn't included in
+                # the intended for path.
+                if get_relpath(self.kwargs['fmritcs']) in intended_targets:
+                    foundfmap = True
                     intended_idx[direction] = idx
                     break
-            else:
-                if idx != 0:
-                    print('WARNING: the intended %s spin echo for anatomical '
-                          'distortion correction is not explicitly defined in '
-                          'the sidecar json.' % direction)
+            
+            if not foundfmap:
+                print('WARNING: the intended %s spin echo for anatomical '
+                      'distortion correction is not explicitly defined in '
+                      'the sidecar json: %s.' % (direction, get_relpath(self.kwargs['fmritcs'])))
                 intended_idx[direction] = 0
 
         return self.config.get_bids('fmap', 'positive', intended_idx[
