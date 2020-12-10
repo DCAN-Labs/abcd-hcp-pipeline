@@ -165,11 +165,11 @@ ENV FSLDIR=/opt/fsl \
 #--------------------------------
 RUN mkdir /opt/matlab /opt/matlab_download
 WORKDIR /opt/matlab_download
-RUN wget http://ssd.mathworks.com/supportfiles/downloads/R2016b/deployment_files/R2016b/installers/glnxa64/MCR_R2016b_glnxa64_installer.zip \
-    && unzip MCR_R2016b_glnxa64_installer.zip \
+RUN wget http://ssd.mathworks.com/supportfiles/downloads/R2017a/deployment_files/R2017a/installers/glnxa64/MCR_R2017a_glnxa64_installer.zip \
+    && unzip MCR_R2017a_glnxa64_installer.zip \
     && ./install -agreeToLicense yes -mode silent -destinationFolder /opt/matlab \
     && rm -rf /opt/matlab_download
-#ENV LD_LIBRARY_PATH=/opt/matlab/v91/bin/glnxa64:/opt/matlab/v91/glnxa64:/opt/matlab/v91/runtime/glnxa64:$LD_LIBRARY_PATH
+#ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/matlab/v91/bin/glnxa64:/opt/matlab/v91/glnxa64:/opt/matlab/v91/runtime/glnxa64
 
 #---------------------
 # Install MSM Binaries
@@ -221,7 +221,7 @@ ENV WORKBENCHDIR=/opt/workbench \
 RUN ln -s -f /lib/x86_64-linux-gnu/libz.so.1.2.11 /opt/workbench/libs_linux64/libz.so.1
 
 # Fix libstdc++6 error
-RUN ln -sf /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.24 /opt/matlab/v91/sys/os/glnxa64/libstdc++.so.6
+RUN ln -sf /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.24 /opt/matlab/v92/sys/os/glnxa64/libstdc++.so.6
 
 # add dcan dependencies
 RUN mkdir /opt/dcan-tools
