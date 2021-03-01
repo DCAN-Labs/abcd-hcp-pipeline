@@ -76,16 +76,18 @@ RUN apt-get clean \
        fi \
     && chmod -R 777 /neurodocker && chmod a+s /neurodocker
 
-# install wb_command v1.3.2
+#-----------------------------
+# Install Connectome Workbench
+#-----------------------------
 RUN mkdir -p /opt
 WORKDIR /opt
-RUN curl --retry 5 https://www.humanconnectome.org/storage/app/media/workbench/workbench-linux64-v1.3.2.zip --output workbench-linux64-v1.3.2.zip && \
-  unzip workbench-linux64-v1.3.2.zip && \
-  rm workbench-linux64-v1.3.2.zip
+RUN curl --retry 5 https://www.humanconnectome.org/storage/app/media/workbench/workbench-linux64-v1.4.2.zip --output workbench-linux64-v1.4.2.zip && \
+  unzip workbench-linux64-v1.4.2.zip && \
+  rm workbench-linux64-v1.4.2.zip
 
-#-------------------
-# Install ANTs 2.2.0
-#-------------------
+#-------------
+# Install ANTs
+#-------------
 RUN echo "Downloading ANTs ..." \
     && curl -sSL --retry 5 https://dl.dropbox.com/s/2f4sui1z6lcgyek/ANTs-Linux-centos5_x86_64-v2.2.0-0740f91.tar.gz \
     | tar zx -C /opt
@@ -93,9 +95,9 @@ RUN echo "Downloading ANTs ..." \
 ENV ANTSPATH=/opt/ants \
     PATH=/opt/ants:$PATH
 
-#------------------------
-# Install Convert3D 1.0.0
-#------------------------
+#------------------
+# Install Convert3D
+#------------------
 RUN echo "Downloading C3D ..." \
     && mkdir /opt/c3d \
     && curl -sSL --retry 5 https://sourceforge.net/projects/c3d/files/c3d/1.0.0/c3d-1.0.0-Linux-x86_64.tar.gz/download \
@@ -108,9 +110,9 @@ RUN echo "Downloading C3D ..." \
 ENV C3DPATH=/opt/c3d/bin \
     PATH=/opt/c3d/bin:$PATH
 
-#--------------------------
-# Install FreeSurfer v5.3.0-HCP
-#--------------------------
+#-------------------
+# Install FreeSurfer
+#-------------------
 RUN echo "Downloading FreeSurfer ..." \
     && curl -sSL --retry 5 https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/5.3.0-HCP/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz \
     | tar xz -C /opt \
@@ -133,7 +135,7 @@ ENV FREESURFER_HOME=/opt/freesurfer
 RUN chmod 777 /opt/freesurfer
 
 #-----------------------------------------------------------
-# Install FSL v5.0.10
+# Install FSL
 # FSL is non-free. If you are considering commerical use
 # of this Docker image, please consult the relevant license:
 # https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Licence
@@ -158,16 +160,16 @@ ENV FSLDIR=/opt/fsl \
     FSL_DIR=/opt/fsl \
     PATH=/opt/fsl/bin:$PATH
 
-#---------------------
+#--------------------------------
 # Install MATLAB Compiler Runtime
-#---------------------
+#--------------------------------
 RUN mkdir /opt/matlab /opt/matlab_download
 WORKDIR /opt/matlab_download
-RUN wget http://ssd.mathworks.com/supportfiles/downloads/R2016b/deployment_files/R2016b/installers/glnxa64/MCR_R2016b_glnxa64_installer.zip \
-    && unzip MCR_R2016b_glnxa64_installer.zip \
+RUN wget http://ssd.mathworks.com/supportfiles/downloads/R2017a/deployment_files/R2017a/installers/glnxa64/MCR_R2017a_glnxa64_installer.zip \
+    && unzip MCR_R2017a_glnxa64_installer.zip \
     && ./install -agreeToLicense yes -mode silent -destinationFolder /opt/matlab \
     && rm -rf /opt/matlab_download
-#ENV LD_LIBRARY_PATH=/opt/matlab/v91/bin/glnxa64:/opt/matlab/v91/glnxa64:/opt/matlab/v91/runtime/glnxa64:$LD_LIBRARY_PATH
+#ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/matlab/v91/bin/glnxa64:/opt/matlab/v91/glnxa64:/opt/matlab/v91/runtime/glnxa64
 
 #---------------------
 # Install MSM Binaries
@@ -178,9 +180,9 @@ RUN mv /opt/homes/ecr05/MSM_HOCR_v2/* /opt/msm/
 RUN rm -rf /opt/homes /opt/msm/MacOSX /opt/msm/Centos
 ENV MSMBINDIR=/opt/msm/Ubuntu
 
-#----------------------------
-# Make perl version 5.20.3
-#----------------------------
+#----------
+# Make perl
+#----------
 RUN curl -sSL --retry 5 http://www.cpan.org/src/5.0/perl-5.20.3.tar.gz | tar zx -C /opt
 WORKDIR /opt/perl-5.20.3
 RUN ./Configure -des -Dprefix=/usr/local
@@ -189,17 +191,17 @@ RUN rm -f /usr/bin/perl && ln -s /usr/local/bin/perl /usr/bin/perl
 WORKDIR /
 RUN rm -rf /opt/perl-5.20.3/
 
-#------------------
+#---------------
 # Make libnetcdf
-#------------------
+#---------------
 
-RUN curl -sSL --retry 5 ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-4.6.1.tar.gz | tar zx -C /opt
-WORKDIR /opt/netcdf-4.6.1/
+RUN curl -sSL --retry 5 https://github.com/Unidata/netcdf-c/archive/v4.6.1.tar.gz | tar zx -C /opt
+WORKDIR /opt/netcdf-c-4.6.1/
 RUN LDFLAGS=-L/usr/local/lib && CPPFLAGS=-I/usr/local/include && ./configure --disable-netcdf-4 --disable-dap --enable-shared --prefix=/usr/local
 RUN make && make install
 WORKDIR /usr/local/lib
 RUN ln -s libnetcdf.so.13.1.1 libnetcdf.so.6
-RUN rm -rf /opt/netcdf-4.6.1/
+RUN rm -rf /opt/netcdf-c-4.6.1/
 ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
 #------------------------------------------
@@ -219,7 +221,7 @@ ENV WORKBENCHDIR=/opt/workbench \
 RUN ln -s -f /lib/x86_64-linux-gnu/libz.so.1.2.11 /opt/workbench/libs_linux64/libz.so.1
 
 # Fix libstdc++6 error
-RUN ln -sf /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.24 /opt/matlab/v91/sys/os/glnxa64/libstdc++.so.6
+RUN ln -sf /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.24 /opt/matlab/v92/sys/os/glnxa64/libstdc++.so.6
 
 # add dcan dependencies
 RUN mkdir /opt/dcan-tools
@@ -227,13 +229,13 @@ WORKDIR /opt/dcan-tools
 # dcan hcp code
 RUN git clone -b 'v2.0.0' --single-branch --depth 1 https://github.com/DCAN-Labs/DCAN-HCP.git /opt/pipeline
 # dcan bold processing
-RUN git clone -b 'v4.0.0' --single-branch --depth 1 https://github.com/DCAN-Labs/dcan_bold_processing.git dcan_bold_proc
+RUN git clone -b 'hotfix/issue27' --single-branch --depth 1 https://github.com/DCAN-Labs/dcan_bold_processing.git dcan_bold_proc
 # dcan custom clean
 RUN git clone -b 'v0.0.0' --single-branch --depth 1 https://github.com/DCAN-Labs/CustomClean.git customclean
 # abcd task prep
 RUN git clone -b 'v0.0.0' --single-branch --depth 1 https://github.com/DCAN-Labs/abcd_task_prep.git ABCD_tfMRI
 # dcan executive summary
-RUN git clone -b 'v0.0.0' --single-branch --depth 1 https://github.com/DCAN-Labs/ExecutiveSummary.git executivesummary
+RUN git clone -b 'v0.0.1' --single-branch --depth 1 https://github.com/DCAN-Labs/ExecutiveSummary.git executivesummary
 # unzip template file
 RUN gunzip /opt/dcan-tools/executivesummary/summary_tools/templates/parasagittal_Tx_169_template.scene.gz
 
@@ -255,50 +257,3 @@ COPY ["LICENSE", "/LICENSE"]
 ENTRYPOINT ["/entrypoint.sh"]
 WORKDIR /
 CMD ["--help"]
-
-#--------------------------------------
-# Save container specifications to JSON
-#--------------------------------------
-RUN echo '{ \
-    \n  "pkg_manager": "apt", \
-    \n  "check_urls": true, \
-    \n  "instructions": [ \
-    \n    [ \
-    \n      "base", \
-    \n      "ubuntu:17.10" \
-    \n    ], \
-    \n    [ \
-    \n      "workbench", \
-    \n      { \
-    \n        "version": "1.3.2" \
-    \n      } \
-    \n    ], \
-    \n    [ \
-    \n      "ants", \
-    \n      { \
-    \n        "version": "2.2.0" \
-    \n      } \
-    \n    ], \
-    \n    [ \
-    \n      "c3d", \
-    \n      { \
-    \n        "version": "1.0.0" \
-    \n      } \
-    \n    ], \
-    \n    [ \
-    \n      "freesurfer", \
-    \n      { \
-    \n        "version": "5.3.0-HCP", \
-    \n        "license_path": "license.txt" \
-    \n      } \
-    \n    ], \
-    \n    [ \
-    \n      "fsl", \
-    \n      { \
-    \n        "version": "5.0.10" \
-    \n      } \
-    \n    ] \
-    \n  ], \
-    \n  "generation_timestamp": "2018-03-15 20:22:57", \
-    \n  "neurodocker_version": "0.3.2-9-g7441d77" \
-    \n}' > /neurodocker/neurodocker_specs.json

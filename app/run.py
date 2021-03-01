@@ -161,8 +161,8 @@ def generate_parser(parser=None):
              'range for participant group respiratory rate (breaths per '
              'minute), or to match bids physio data directly [3].  These '
              'parameters are highly recommended for data acquired with a '
-             'frequency of approx. 1 Hz or more (TR<=1.0). Default is no '
-             'filter.'
+             'frequency of greater than 1 Hz (TR less than 1 second). '
+             'Default is no filter.'
     )
     extras = parser.add_argument_group(
         'Special pipeline options',

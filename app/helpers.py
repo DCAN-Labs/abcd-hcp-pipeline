@@ -35,7 +35,7 @@ def read_bids_dataset(bids_input, subject_list=None, collect_on_subject=False):
     }
     """
 
-    layout = BIDSLayout(bids_input)
+    layout = BIDSLayout(bids_input, index_metadata=True)
     subjects = layout.get_subjects()
 
     # filter subject list
@@ -60,16 +60,15 @@ def read_bids_dataset(bids_input, subject_list=None, collect_on_subject=False):
             'Otherwise check that the bids folder provided is correct.'
 
     for subject, sessions in subsess:
-        # get relevant image modalities
-        anat = set_anatomicals(layout, subject, sessions)
-        func = set_functionals(layout, subject, sessions)
-        fmap = set_fieldmaps(layout, subject, sessions)
+        # get relevant image datatypes
+        anat, anat_types = set_anatomicals(layout, subject, sessions)
+        func, func_types = set_functionals(layout, subject, sessions)
+        fmap, fmap_types = set_fieldmaps(layout, subject, sessions)
 
         bids_data = {
             'subject': subject,
             'session': sessions if not collect_on_subject else None,
-            'types': layout.get(subject=subject, session=sessions,
-                                target='type', return_type='id')
+            'types': anat_types.union(func_types, fmap_types)
         }
         bids_data.update(anat)
         bids_data.update(func)
@@ -80,83 +79,120 @@ def read_bids_dataset(bids_input, subject_list=None, collect_on_subject=False):
 
 def set_anatomicals(layout, subject, sessions):
     """
-    returns dictionary of anatomical (T1w, T2w) filepaths and associated
-    metadata.
-    :param subject: participant labels.
+    Returns dictionary of anatomical (T1w, T2w) filepaths and associated
+    metadata, and set of types.
+    :param subject: participant label.
     :param sessions: iterable of session labels.
     """
-    t1ws = layout.get(subject=subject, session=sessions, modality='anat',
-                      type='T1w', extensions='.nii.gz')
-    t1w_metadata = layout.get_metadata(t1ws[0].filename)
+    types = set()
+    t1ws = layout.get(subject=subject, session=sessions, datatype='anat',
+                      suffix='T1w', extension=['nii.gz','nii'])
+    if len(t1ws):
+        t1w_metadata = layout.get_metadata(t1ws[0].path)
+        types.add('T1w')
+    else:
+        print("No T1w data was found for this subject.")
+        t1w_metadata = None
 
-    t2ws = layout.get(subject=subject, session=sessions, modality='anat',
-                      type='T2w', extensions='.nii.gz')
+    t2ws = layout.get(subject=subject, session=sessions, datatype='anat',
+                      suffix='T2w', extension=['nii.gz','nii'])
     if len(t2ws):
-        t2w_metadata = layout.get_metadata(t2ws[0].filename)
+        t2w_metadata = layout.get_metadata(t2ws[0].path)
+        types.add('T2w')
     else:
         t2w_metadata = None
+
     spec = {
-        't1w': [t.filename for t in t1ws],
+        't1w': [t.path for t in t1ws],
         't1w_metadata': t1w_metadata,
-        't2w': [t.filename for t in t2ws],
+        't2w': [t.path for t in t2ws],
         't2w_metadata': t2w_metadata
     }
-    return spec
+    return spec, types
 
 
 def set_functionals(layout, subject, sessions):
     """
-    returns dictionary of bold filepaths and associated metadata.
-    :param subject: participant labels.
+    Returns dictionary of functional (bold) filepaths and associated metadata,
+    and set of types.
+    :param subject: participant label.
     :param sessions: iterable of session labels.
     """
-    func = layout.get(subject=subject, session=sessions, modality='func',
-                      type='bold', extensions='.nii.gz')
-    func_metadata = [layout.get_metadata(x.filename) for x in func]
+    func = layout.get(subject=subject, session=sessions, datatype='func',
+                      suffix='bold', extension=['nii.gz','nii'])
+    func_metadata = [layout.get_metadata(x.path) for x in func]
+
+    types = {f.entities['suffix'] for f in func}
 
     spec = {
-        'func': [f.filename for f in func],
+        'func': [f.path for f in func],
         'func_metadata': func_metadata
     }
-    return spec
+    return spec, types
 
 
 def set_fieldmaps(layout, subject, sessions):
     """
-    returns dictionary of fieldmap (epi or magnitude) filepaths and 
-    associated metadata.
-    :param subject: participant labels.
+    Returns dictionary of fieldmap (epi or magnitude) filepaths and associated
+    metadata. Only fieldmaps with 'IntendedFor' metadata are returned. Also
+    returns set of types.
+    :param subject: participant label.
     :param sessions: iterable of session labels.
     """
-    fmap = layout.get(subject=subject, session=sessions, modality='fmap',
-                      extensions='.nii.gz')
-    fmap_metadata = [layout.get_metadata(x.filename) for x in fmap]
+    fmap = []
+    fmap_metadata = []
+
+    # Currently, we only support distortion correction methods that use epi,
+    # magnitude, or phasediff field maps. (See fmap_types in ParameterSettings
+    # in pipelines.py.)
+    supported_fmaps = ['epi', 'magnitude', 'magnitude1', 'magnitude2',
+            'phasediff', 'phase1', 'phase2']
+    extensions = ['nii.gz','nii']
+    for bids_file in layout.get(subject=subject, session=sessions,
+            datatype='fmap', suffix=supported_fmaps, extension=extensions):
+
+        # Only include fmaps with non-empty 'IntendedFor' metadata.
+        meta = bids_file.get_metadata()
+        if 'IntendedFor' in meta.keys() and len(meta['IntendedFor']):
+            fmap.append(bids_file)
+            fmap_metadata.append(meta)
+
+    types = {x.entities['suffix'] for x in fmap}
 
     # handle case spin echo
-    types = [x.type for x in fmap]
-    indices = [i for i, x in enumerate(types) if x == 'epi']
-    if len(indices):
-        # @TODO read IntendedFor field to map field maps to functionals.
-        positive = [i for i, x in enumerate(fmap_metadata) if '-' not in x[
-            'PhaseEncodingDirection']]
-        negative = [i for i, x in enumerate(fmap_metadata) if '-' in x[
-            'PhaseEncodingDirection']]
-        fmap = {'positive': [fmap[i].filename for i in positive],
-                'negative': [fmap[i].filename for i in negative]}
-        fmap_metadata = {
-            'positive': [fmap_metadata[i] for i in positive],
-            'negative': [fmap_metadata[i] for i in negative]}
-        # @TODO check that no orthogonal field maps were collected.
+    if 'epi' in types:
 
-    # handle case fieldmap # @TODO
-    elif 'magnitude' in fmap:
+        if len(types) > 1:
+            print("""
+            The pipeline must choose distortion correction method based on the
+            type(s) of field maps available. Therefore, there cannot be more
+            than one type of field map. Please choose either spin echo (epi) or
+            magnitude/phasediff field maps, and make sure those json files have
+            'IntendedFor' values.
+            """)
+            raise Exception('Too many field map types found: %s' % types)
+        else:
+            # We have spin echo - and nothing else - so sort out its data.
+            positive = [i for i, x in enumerate(fmap_metadata) if '-' not in x[
+                'PhaseEncodingDirection']]
+            negative = [i for i, x in enumerate(fmap_metadata) if '-' in x[
+                'PhaseEncodingDirection']]
+            fmap = {'positive': [fmap[i].path for i in positive],
+                    'negative': [fmap[i].path for i in negative]}
+            fmap_metadata = {
+                    'positive': [fmap_metadata[i] for i in positive],
+                    'negative': [fmap_metadata[i] for i in negative]}
+
+    else:
+        # The other field-map types found above will be filtered out in the
+        # implementation - see pipelines.py.
         pass
 
     spec = {
         'fmap': fmap,
         'fmap_metadata': fmap_metadata
     }
-    return spec
+    return spec, types
 
 
 def get_readoutdir(metadata):
@@ -188,7 +224,7 @@ def get_readoutdir(metadata):
 
 def get_realdwelltime(metadata):
     """
-    attempts to compute real dwell time from metadata fields. Certain 
+    attempts to compute real dwell time from metadata fields. Certain
     reconstruction parameters such as phaseOversampling and phaseResolution
     may not be accounted for.
     """
