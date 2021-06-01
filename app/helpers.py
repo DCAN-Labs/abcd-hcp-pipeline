@@ -183,7 +183,7 @@ def set_fieldmaps(layout, subject, sessions):
                     'positive': [fmap_metadata[i] for i in positive],
                     'negative': [fmap_metadata[i] for i in negative]}
     #should we just check for one here? and then have the len(types) figure out the rest?
-    elif 'phase1' or 'phase2' or 'magnitude1' or 'magnitude2' in types: 
+    elif 'phase1' and 'phase2' and 'magnitude1' and 'magnitude2' in types:
         if len(types) != 4: #change the print output here
             print("""
             The pipeline must choose distortion correction method based on the
@@ -197,35 +197,52 @@ def set_fieldmaps(layout, subject, sessions):
             raise Exception('Too many field map types found: %s' % types)
         else:
             #We have phase - and nothing else - so sort its data.
-            phase1 = [i for i, x in enumerate(fmap_metadata) if min(x['EchoTime']) in x['EchoTime']]
-            phase2 = [i for i, x in enumerate(fmap_metadata) if max(x['EchoTime']) in x['EchoTime']]
-            magnitude1 = [i for i, x in enumerate(fmap_metadata) if min(x['EchoTime']) in x['EchoTime']]
-            magnitude2 = [i for i, x in enumerate(fmap_metadata) if max(x['EchoTime']) in x['EchoTime']]            
 
-            fmap = {'phase1': [fmap[i].path for i in phase1],
-                    'phase2': [fmap[i].path for i in phase2],
-                    'magnitude1': [fmap[i].path for i in magnitude1],
-                    'magnitude2': [fmap[i].path for i in magnitude2]}
+            phase1 = [i for i, x in enumerate(fmap) if 'phase1' == x.entities['suffix']]
+            phase2 = [i for i, x in enumerate(fmap) if 'phase2' == x.entities['suffix']]
+            magnitude1 = [i for i, x in enumerate(fmap) if 'magnitude1' == x.entities['suffix']]
+            magnitude2 = [i for i, x in enumerate(fmap) if 'magnitude2' == x.entities['suffix']]
+
+            EchoTimes = []
+            for x in fmap_metadata:
+                EchoTimes += [x['EchoTime']]
+            UniqueEchoTimes = set(EchoTimes)
+            if len(UniqueEchoTimes) != 2:
+                raise Exception('Irregular number of EchoTimes: %s' % UniqueEchoTimes)
+
+            if fmap_metadata[phase1] != min(UniqueEchoTimes):
+                raise Exception('phase1 EchoTime larger than phase2')
+            if fmap_metadata[phase2] != max(UniqueEchoTimes):
+                raise Exception('phase2 EchoTime smaller than phase1')
+            if fmap_metadata[magnitude1] != min(UniqueEchoTimes):
+                raise Exception('mag1 EchoTime larger than mag2')
+            if fmap_metadata[magnitude2] != max(UniqueEchoTimes):
+                raise Exception('mag2 EchoTime smaller than mag1')
+
+            fmap = {'phase1': [fmap[phase1].path],
+                    'phase2': [fmap[phase2].path],
+                    'magnitude1': [fmap[magnitude1].path],
+                    'magnitude2': [fmap[magnitude2].path]}
             fmap_metadata = {
-                    'phase1': [fmap_metadata[i] for i in phase1],
-                    'phase2': [fmap_metadata[i] for i in phase2],
-                    'magnitude1': [fmap_metadata[i] for i in magnitude1],
-                    'magnitude2': [fmap_metadata[i] for i in magnitude2]}
+                    'phase1': [fmap_metadata[phase1]],
+                    'phase2': [fmap_metadata[phase2]],
+                    'magnitude1': [fmap_metadata[magnitude1]],
+                    'magnitude2': [fmap_metadata[magnitude2]]}
 
     else:
         # The other field-map types found above will be filtered out in the
         # implementation - see pipelines.py.
-            print("""
-            The pipeline must choose distortion correction method based on the
-            type(s) of field maps available. The type of fieldmaps you have are
-            either not able to be used in the abcd-hcp-pipeline or they are
-            not properly identified in the BIDS format. The pipeline does not
-            account for 'phasediff', 'magnitude', and 'fieldmap' field maps
-            filetypes yet. If you have 'phasediff' and 'magnitude' field maps,
-            please provide the original 'phase1', 'phase2', 'magnitude1', and
-            'magnitude2' field maps used to calculate those files. The pipeline
-            does the calculation itself.
-            """)        
+        print("""
+        The pipeline must choose distortion correction method based on the
+        type(s) of field maps available. The type of fieldmaps you have are
+        either not able to be used in the abcd-hcp-pipeline or they are
+        not properly identified in the BIDS format. The pipeline does not
+        account for 'phasediff', 'magnitude', and 'fieldmap' field maps
+        filetypes yet. If you have 'phasediff' and 'magnitude' field maps,
+        please provide the original 'phase1', 'phase2', 'magnitude1', and
+        'magnitude2' field maps used to calculate those files. The pipeline
+        does the calculation itself.
+        """)
         pass
 
     spec = {
