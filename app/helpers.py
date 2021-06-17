@@ -198,6 +198,7 @@ def set_fieldmaps(layout, subject, sessions):
         else:
             #We have phase - and nothing else - so sort its data.
 
+            # Get indices of phase/mag files from fmap, but make an integer not a list
             phase1 = [i for i, x in enumerate(fmap) if 'phase1' == x.entities['suffix']]
             phase2 = [i for i, x in enumerate(fmap) if 'phase2' == x.entities['suffix']]
             magnitude1 = [i for i, x in enumerate(fmap) if 'magnitude1' == x.entities['suffix']]
@@ -210,24 +211,24 @@ def set_fieldmaps(layout, subject, sessions):
             if len(UniqueEchoTimes) != 2:
                 raise Exception('Irregular number of EchoTimes: %s' % UniqueEchoTimes)
 
-            if fmap_metadata[phase1] != min(UniqueEchoTimes):
+            if fmap_metadata[phase1[0]]['EchoTime'] != min(UniqueEchoTimes):
                 raise Exception('phase1 EchoTime larger than phase2')
-            if fmap_metadata[phase2] != max(UniqueEchoTimes):
+            if fmap_metadata[phase2[0]]['EchoTime'] != max(UniqueEchoTimes):
                 raise Exception('phase2 EchoTime smaller than phase1')
-            if fmap_metadata[magnitude1] != min(UniqueEchoTimes):
+            if fmap_metadata[magnitude1[0]]['EchoTime'] != min(UniqueEchoTimes):
                 raise Exception('mag1 EchoTime larger than mag2')
-            if fmap_metadata[magnitude2] != max(UniqueEchoTimes):
+            if fmap_metadata[magnitude2[0]]['EchoTime'] != max(UniqueEchoTimes):
                 raise Exception('mag2 EchoTime smaller than mag1')
 
-            fmap = {'phase1': [fmap[phase1].path],
-                    'phase2': [fmap[phase2].path],
-                    'magnitude1': [fmap[magnitude1].path],
-                    'magnitude2': [fmap[magnitude2].path]}
+            fmap = {'phase1': [fmap[phase1[0]].path],
+                    'phase2': [fmap[phase2[0]].path],
+                    'magnitude1': [fmap[magnitude1[0]].path],
+                    'magnitude2': [fmap[magnitude2[0]].path]}
             fmap_metadata = {
-                    'phase1': [fmap_metadata[phase1]],
-                    'phase2': [fmap_metadata[phase2]],
-                    'magnitude1': [fmap_metadata[magnitude1]],
-                    'magnitude2': [fmap_metadata[magnitude2]]}
+                    'phase1': [fmap_metadata[phase1[0]]],
+                    'phase2': [fmap_metadata[phase2[0]]],
+                    'magnitude1': [fmap_metadata[magnitude1[0]]],
+                    'magnitude2': [fmap_metadata[magnitude2[0]]]}
 
     else:
         # The other field-map types found above will be filtered out in the
