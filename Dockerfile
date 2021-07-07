@@ -63,7 +63,7 @@ RUN pip3 install setuptools wheel
 RUN pip install pyyaml numpy pillow pandas
 
 RUN wget -O- http://neuro.debian.net/lists/bionic.us-ca.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
-RUN apt-key adv --recv-keys --keyserver hkp://ha.pool.sks-keyservers.net 0xA5D32F012649A5A9 || apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9
+RUN apt-key adv --recv-keys --keyserver pgp.mit.edu 0xA5D32F012649A5A9 || apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 0xA5D32F012649A5A9
 RUN apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && localedef --force --inputfile=en_US --charmap=UTF-8 C.UTF-8 \
@@ -81,9 +81,9 @@ RUN apt-get clean \
 #-----------------------------
 RUN mkdir -p /opt
 WORKDIR /opt
-RUN curl --retry 5 https://www.humanconnectome.org/storage/app/media/workbench/workbench-linux64-v1.4.2.zip --output workbench-linux64-v1.4.2.zip && \
-  unzip workbench-linux64-v1.4.2.zip && \
-  rm workbench-linux64-v1.4.2.zip
+RUN curl --retry 5 https://www.humanconnectome.org/storage/app/media/workbench/workbench-linux64-v1.5.0.zip --output workbench-linux64-v1.5.0.zip && \
+  unzip workbench-linux64-v1.5.0.zip && \
+  rm workbench-linux64-v1.5.0.zip
 
 #-------------
 # Install ANTs
@@ -229,7 +229,7 @@ WORKDIR /opt/dcan-tools
 # dcan hcp code
 RUN git clone -b 'v2.0.0' --single-branch --depth 1 https://github.com/DCAN-Labs/DCAN-HCP.git /opt/pipeline
 # dcan bold processing
-RUN git clone -b 'hotfix/issue27' --single-branch --depth 1 https://github.com/DCAN-Labs/dcan_bold_processing.git dcan_bold_proc
+RUN git clone -b 'v4.0.6' --single-branch --depth 1 https://github.com/DCAN-Labs/dcan_bold_processing.git dcan_bold_proc
 # dcan custom clean
 RUN git clone -b 'v0.0.0' --single-branch --depth 1 https://github.com/DCAN-Labs/CustomClean.git customclean
 # abcd task prep
