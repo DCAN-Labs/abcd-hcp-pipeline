@@ -235,7 +235,7 @@ RUN git clone -b 'v0.0.0' --single-branch --depth 1 https://github.com/DCAN-Labs
 # abcd task prep
 RUN git clone -b 'v0.0.0' --single-branch --depth 1 https://github.com/DCAN-Labs/abcd_task_prep.git ABCD_tfMRI
 # dcan executive summary
-RUN git clone -b 'v0.0.1' --single-branch --depth 1 https://github.com/DCAN-Labs/ExecutiveSummary.git executivesummary
+RUN git clone -b 'v2.2.6' --single-branch --depth 1 https://github.com/DCAN-Labs/ExecutiveSummary.git executivesummary
 # unzip template file
 RUN gunzip /opt/dcan-tools/executivesummary/summary_tools/templates/parasagittal_Tx_169_template.scene.gz
 
