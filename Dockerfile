@@ -237,7 +237,7 @@ RUN git clone -b 'v0.0.0' --single-branch --depth 1 https://github.com/DCAN-Labs
 # dcan executive summary
 RUN git clone -b 'v2.2.6' --single-branch --depth 1 https://github.com/DCAN-Labs/ExecutiveSummary.git executivesummary
 # unzip template file
-RUN gunzip /opt/dcan-tools/executivesummary/summary_tools/templates/parasagittal_Tx_169_template.scene.gz
+RUN gunzip /opt/dcan-tools/executivesummary/templates/parasagittal_Tx_169_template.scene.gz
 
 # unless otherwise specified...
 ENV OMP_NUM_THREADS=1
