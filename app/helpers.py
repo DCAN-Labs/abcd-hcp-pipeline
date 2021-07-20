@@ -310,17 +310,34 @@ def get_relpath(filename):
 def get_fmriname(filename):
     """
     :param filename: path to bids functional nifti
-    :return: name of fmri run, e.g. "task-rest01".
+    :return: session and task run part of name; e.g.:
+    :     ses-123456_task-rest_run-42
     """
+    # The goal is to have a unique name for each fmri file.
+    # Note that both session and run are optional in the
+    # original filename, so get this as 3 pieces.
     name = os.path.basename(filename)
-    expr = re.compile(r'.*(task-[^_]+).*run-([0-9]+).*')
-    taskrun = expr.match(name)
-    if taskrun:
-        fmriname = taskrun.group(1) + taskrun.group(2)
+
+    expr = re.compile(r'.*(ses-(?!None)[^_]+_).*')
+    session = expr.match(name)
+
+    expr = re.compile(r'.*(task-[^_]+_).*')
+    taskname = expr.match(name)
+
+    expr = re.compile(r'.*(run-[0-9]+).*')
+    run = expr.match(name)
+
+    if session:
+        fmriname = session.group(1) + taskname.group(1)
+    else:
+        fmriname = taskname.group(1)
+
+    if run:
+        fmriname += run.group(1)
     else:
         # handle optional bids "run" field:
-        fmriname = get_taskname(filename)
-        fmriname += '01'
+        fmriname += 'run-01'
+
     return fmriname
 
 
