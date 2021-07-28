@@ -229,7 +229,7 @@ WORKDIR /opt/dcan-tools
 # dcan hcp code
 RUN git clone -b 'v2.0.0' --single-branch --depth 1 https://github.com/DCAN-Labs/DCAN-HCP.git /opt/pipeline
 # dcan bold processing
-RUN git clone -b 'patch-1' --single-branch --depth 1 https://github.com/madisoth/dcan_bold_processing.git dcan_bold_proc
+RUN git clone -b 'v4.0.3' --single-branch --depth 1 https://github.com/madisoth/dcan_bold_processing.git dcan_bold_proc
 # dcan custom clean
 RUN git clone -b 'v0.0.0' --single-branch --depth 1 https://github.com/DCAN-Labs/CustomClean.git customclean
 # abcd task prep
