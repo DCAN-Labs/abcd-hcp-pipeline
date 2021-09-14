@@ -17,7 +17,7 @@ In order to run this software via a container, you will need to acquire a copy o
 Before running, you will need to load the image onto your Docker service by running the following command:
 
 ```{bash}
-docker pull dcanlabs/abcd-hcp-pipeline
+docker pull dcanumn/abcd-hcp-pipeline
 ```
 
 If you receive a "no space left on device" error during this pull process,
@@ -28,9 +28,9 @@ you may need to clean up any old/dangling images and containers from the docker 
 You can either pull the image from the Docker repository, or build it from the repository for the image to be saved in the working directory.
 
 ```{bash}
-singularity pull docker://dcanlabs/abcd-hcp-pipeline
+singularity pull docker://dcanumn/abcd-hcp-pipeline
 
-singularity build abcd-hcp-pipeline.img docker://dcanlabs/abcd-hcp-pipeline
+singularity build abcd-hcp-pipeline.img docker://dcanumn/abcd-hcp-pipeline
 ```
 
 These are essentially the same, but in the latter case you have control over the name of the file.
