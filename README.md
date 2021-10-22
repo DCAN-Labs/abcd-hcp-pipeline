@@ -30,7 +30,7 @@ You can either pull the image from the Docker repository, or build it from the r
 ```{bash}
 singularity pull docker://dcanumn/abcd-hcp-pipeline
 
-singularity build abcd-hcp-pipeline.img docker://dcanumn/abcd-hcp-pipeline
+singularity build abcd-hcp-pipeline.sif docker://dcanumn/abcd-hcp-pipeline
 ```
 
 These are essentially the same, but in the latter case you have control over the name of the file.
@@ -51,7 +51,7 @@ docker run --rm \
     -v /path/to/bids_dataset:/bids_input:ro \
     -v /path/to/outputs:/output \
     -v /path/to/freesurfer/license:/license \
-    dcanlabs/abcd-hcp-pipeline /bids_input /output --freesurfer-license=/license [OPTIONS]
+    dcanumn/abcd-hcp-pipeline /bids_input /output --freesurfer-license=/license [OPTIONS]
 ```
 
 To call using Singularity:
@@ -61,7 +61,7 @@ env -i singularity run \
     -B /path/to/bids_dataset:/bids_input \
     -B /path/to/outputs:/output \
     -B /path/to/freesurfer/license.txt:/opt/freesurfer/license.txt \
-    ./abcd-hcp-pipeline.img /bids_input /output --freesurfer-license=/opt/freesurfer/license.txt [OPTIONS]
+    ./abcd-hcp-pipeline.sif /bids_input /output --freesurfer-license=/opt/freesurfer/license.txt [OPTIONS]
 ```
 
 notice that the license is now mounted directly into the freesurfer folder, 
@@ -190,14 +190,14 @@ docker run --rm \
     -v /path/to/outputs:/output \
     -v /path/to/freesurfer/LICENSE:/license:ro \
     -v /path/to/template/folder:/atlases \
-    dcanlabs/abcd-hcp-pipeline /bids_input /output \
+    dcanumn/abcd-hcp-pipeline /bids_input /output \
         --freesurfer-license /license \
         --bandstop 18.582 25.726 \
         --study-template /atlases/study_head.nii.gz /atlases/study_brain.nii.gz \
         --ncpus 4
 ```
 
-Note that the mount flag `-v` follows `docker run`, as it is a Docker option, whereas the `--freesurfer-license`, `--bandstop`, and `--study-template` flags follow `dcanlabs/abcd-hcp-pipeline`, as they are options passed into this pipeline and documented in the usage above.
+Note that the mount flag `-v` follows `docker run`, as it is a Docker option, whereas the `--freesurfer-license`, `--bandstop`, and `--study-template` flags follow `dcanumn/abcd-hcp-pipeline`, as they are options passed into this pipeline and documented in the usage above.
 
 
 ### Additional Information:
