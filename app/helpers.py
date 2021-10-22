@@ -6,13 +6,14 @@ from itertools import product
 from bids.layout import BIDSLayout
 
 
-def read_bids_dataset(bids_input, subject_list=None, collect_on_subject=False):
+def read_bids_dataset(bids_input, subject_list=None, session_list=None, collect_on_subject=False):
     """
     extracts and organizes relevant metadata from a bids dataset necessary
     for the dcan-modified hcp fmri processing pipeline.
     :param bids_input: path to input bids folder
     :param subject_list: EITHER, a list of subject ids to filter on,
     OR a dictionary of subject id: list of sessions to filter on.
+    :param session_list: a list of session ids to filter on.
     :param collect_on_subject: collapses all sessions, for cases with
     non-longitudinal data spread across scan sessions.
     :return: bids data struct (nested dict)
@@ -48,6 +49,11 @@ def read_bids_dataset(bids_input, subject_list=None, collect_on_subject=False):
     # filter session list
     for s in subjects:
         sessions = layout.get_sessions(subject=s)
+
+        # filter sessions_list
+        if isinstance(session_list, list):
+            sessions = [t for t in sessions if t in session_list]
+
         if not sessions:
             subsess += [(s, None)]
         elif collect_on_subject:
