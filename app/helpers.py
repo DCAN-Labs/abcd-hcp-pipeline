@@ -182,10 +182,68 @@ def set_fieldmaps(layout, subject, sessions):
             fmap_metadata = {
                     'positive': [fmap_metadata[i] for i in positive],
                     'negative': [fmap_metadata[i] for i in negative]}
+    #should we just check for one here? and then have the len(types) figure out the rest?
+    elif 'phase1' and 'phase2' and 'magnitude1' and 'magnitude2' in types:
+        if len(types) != 4: #change the print output here
+            print("""
+            The pipeline must choose distortion correction method based on the
+            type(s) of field maps available. Please choose either spin echo (epi)
+            or magnitude/phasediff fieldmaps. When using phase and magnitude
+            field maps, there must be four total types of field maps (phase1,
+            phase2, magnitude1, and magnitude2). Please make sure all four
+            types are present, and make sure the corresponding json files
+            have 'IntendedFor' values.
+            """)
+            raise Exception('Too many field map types found: %s' % types)
+        else:
+            #We have phase - and nothing else - so sort its data.
+
+            # Get indices of phase/mag files from fmap, but make an integer not a list
+            phase1 = [i for i, x in enumerate(fmap) if 'phase1' == x.entities['suffix']]
+            phase2 = [i for i, x in enumerate(fmap) if 'phase2' == x.entities['suffix']]
+            magnitude1 = [i for i, x in enumerate(fmap) if 'magnitude1' == x.entities['suffix']]
+            magnitude2 = [i for i, x in enumerate(fmap) if 'magnitude2' == x.entities['suffix']]
+
+            EchoTimes = []
+            for x in fmap_metadata:
+                EchoTimes += [x['EchoTime']]
+            UniqueEchoTimes = set(EchoTimes)
+            if len(UniqueEchoTimes) != 2:
+                raise Exception('Irregular number of EchoTimes: %s' % UniqueEchoTimes)
+
+            if fmap_metadata[phase1[0]]['EchoTime'] != min(UniqueEchoTimes):
+                raise Exception('phase1 EchoTime larger than phase2')
+            if fmap_metadata[phase2[0]]['EchoTime'] != max(UniqueEchoTimes):
+                raise Exception('phase2 EchoTime smaller than phase1')
+            if fmap_metadata[magnitude1[0]]['EchoTime'] != min(UniqueEchoTimes):
+                raise Exception('mag1 EchoTime larger than mag2')
+            if fmap_metadata[magnitude2[0]]['EchoTime'] != max(UniqueEchoTimes):
+                raise Exception('mag2 EchoTime smaller than mag1')
+
+            fmap = {'phase1': [fmap[phase1[0]].path],
+                    'phase2': [fmap[phase2[0]].path],
+                    'magnitude1': [fmap[magnitude1[0]].path],
+                    'magnitude2': [fmap[magnitude2[0]].path]}
+            fmap_metadata = {
+                    'phase1': [fmap_metadata[phase1[0]]],
+                    'phase2': [fmap_metadata[phase2[0]]],
+                    'magnitude1': [fmap_metadata[magnitude1[0]]],
+                    'magnitude2': [fmap_metadata[magnitude2[0]]]}
 
     else:
         # The other field-map types found above will be filtered out in the
         # implementation - see pipelines.py.
+        print("""
+        The pipeline must choose distortion correction method based on the
+        type(s) of field maps available. The type of fieldmaps you have are
+        either not able to be used in the abcd-hcp-pipeline or they are
+        not properly identified in the BIDS format. The pipeline does not
+        account for 'phasediff', 'magnitude', and 'fieldmap' field maps
+        filetypes yet. If you have 'phasediff' and 'magnitude' field maps,
+        please provide the original 'phase1', 'phase2', 'magnitude1', and
+        'magnitude2' field maps used to calculate those files. The pipeline
+        does the calculation itself.
+        """)
         pass
 
     spec = {
@@ -252,17 +310,34 @@ def get_relpath(filename):
 def get_fmriname(filename):
     """
     :param filename: path to bids functional nifti
-    :return: name of fmri run, e.g. "task-rest01".
+    :return: session and task run part of name; e.g.:
+    :     ses-123456_task-rest_run-42
     """
+    # The goal is to have a unique name for each fmri file.
+    # Note that both session and run are optional in the
+    # original filename, so get this as 3 pieces.
     name = os.path.basename(filename)
-    expr = re.compile(r'.*(task-[^_]+).*run-([0-9]+).*')
-    taskrun = expr.match(name)
-    if taskrun:
-        fmriname = taskrun.group(1) + taskrun.group(2)
+
+    expr = re.compile(r'.*(ses-(?!None)[^_]+_).*')
+    session = expr.match(name)
+
+    expr = re.compile(r'.*(task-[^_]+_).*')
+    taskname = expr.match(name)
+
+    expr = re.compile(r'.*(run-[0-9]+).*')
+    run = expr.match(name)
+
+    if session:
+        fmriname = session.group(1) + taskname.group(1)
+    else:
+        fmriname = taskname.group(1)
+
+    if run:
+        fmriname += run.group(1)
     else:
         # handle optional bids "run" field:
-        fmriname = get_taskname(filename)
-        fmriname += '01'
+        fmriname += 'run-01'
+
     return fmriname
 
 
