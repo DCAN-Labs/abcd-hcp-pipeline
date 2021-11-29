@@ -251,9 +251,11 @@ RUN mkdir /bids_input /output /atlases /config
 
 # include bidsapp interface
 COPY ["app", "/app"]
+RUN chmod -R 775 /app
 RUN pip3 install -r /app/requirements.txt
 # setup entrypoint
 COPY ["./entrypoint.sh", "/entrypoint.sh"]
+RUN chmod -R 775 /entrypoint.sh
 COPY ["LICENSE", "/LICENSE"]
 ENTRYPOINT ["/entrypoint.sh"]
 WORKDIR /
