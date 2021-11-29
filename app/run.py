@@ -50,6 +50,7 @@ def _cli():
         'bids_dir': args.bids_dir,
         'output_dir': args.output_dir,
         'subject_list': args.subject_list,
+        'session_list': args.session_list,
         'collect': args.collect,
         'ncpus': args.ncpus,
         'stages': args.stages,
@@ -102,6 +103,13 @@ def generate_parser(parser=None):
         help='Optional list of participant IDs to run. Default is all IDs '
              'found under the BIDS input directory. The participant label '
              'does not include the "sub-" prefix'
+    )
+    parser.add_argument(
+        '--session-id', dest='session_list', nargs='*',
+        metavar='LABEL',
+        help='filter input dataset by session id. Default is all ids '
+             'found under the subject input directory(s).  A session id '
+             'does not include "ses-"'
     )
     parser.add_argument(
         '--freesurfer-license', dest='freesurfer_license',
@@ -219,7 +227,7 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
               stages=None, bandstop_params=None, check_only=False,
               run_abcd_task=False, study_template=None, cleaning_json=None,
               print_commands=False, ignore_expected_outputs=False,
-              ignore_modalities=[], freesurfer_license=None):
+              ignore_modalities=[], freesurfer_license=None, session_list=None):
     """
     main application interface
     :param bids_dir: input bids dataset see "helpers.read_bids_dataset" for
@@ -227,6 +235,7 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
     :param output_dir: output folder
     :param subject_list: subject and session list filtering.  See
     "helpers.read_bids_dataset" for more information.
+    :param session_list: session list filtering. See "helpers.read_bids_dataset".
     :param collect: treats each subject as having only one session.
     :param ncpus: number of cores for parallelized processing.
     :param stages: only run a subset of stages.
@@ -241,7 +250,8 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
     session_generator = read_bids_dataset(
-        bids_dir, subject_list=subject_list, collect_on_subject=collect
+        bids_dir, subject_list=subject_list, 
+        collect_on_subject=collect, session_list=session_list
     )
 
     # run each session in serial
