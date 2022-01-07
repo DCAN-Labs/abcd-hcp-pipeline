@@ -11,9 +11,7 @@ RUN apt-get update && apt-get install -yq --no-install-recommends \
         python-pip \
         python3 \
         python3-dev \
-        wget \
-        && apt-get clean \
-        && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+        wget
 
 RUN pip install pyyaml numpy pillow pandas
 RUN apt-get update && apt-get install -yq --no-install-recommends python3-pip
@@ -22,7 +20,7 @@ RUN pip3 install setuptools wheel
 # include bidsapp interface
 COPY ["app", "/app"]
 RUN chmod -R 775 /app
-RUN pip3 install -r /app/requirements.txt
+RUN pip3 install -r "/app/requirements.txt"
 
 # dcan hcp code
 RUN git clone -b 'v2.0.0' --single-branch --depth 1 https://github.com/DCAN-Labs/DCAN-HCP.git /opt/pipeline
