@@ -51,7 +51,7 @@ docker run --rm \
     -v /path/to/bids_dataset:/bids_input:ro \
     -v /path/to/outputs:/output \
     -v /path/to/freesurfer/license:/license \
-    dcanumn/abcd-hcp-pipeline /bids_input /output --freesurfer-license=/license [OPTIONS]
+    dcanumn/abcd-hcp-pipeline /bids_input /output --freesurfer-license=/license.txt [OPTIONS]
 ```
 
 To call using Singularity:
