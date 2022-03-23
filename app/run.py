@@ -122,7 +122,7 @@ def generate_parser(parser=None):
     )
     parser.add_argument(
         '--dcmethod', dest='dcmethod',
-        choices=['TOPUP', 'FIELDMAP' 'NONE'],
+        choices=['TOPUP', 'FIELDMAP', 'NONE'],
         help='Choices: TOPUP, FIELDMAP, NONE '
              'Specifies method used for fieldmap-based distortion ' 
              'correction of anatomical and functional data '
