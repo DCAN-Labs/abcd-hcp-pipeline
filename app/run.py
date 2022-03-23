@@ -25,7 +25,7 @@ NeuroImage, 62:782-90, 2012
 [6] Avants, BB et al. The Insight ToolKit image registration framework. Front
 Neuroinform. 2014 Apr 28;8:44. doi: 10.3389/fninf.2014.00044. eCollection 2014.
 """
-__version__ = "0.0.1"
+__version__ = "0.1.2"
 
 import argparse
 import os
@@ -62,7 +62,8 @@ def _cli():
         'print_commands': args.print,
         'ignore_expected_outputs': args.ignore_expected_outputs,
         'ignore_modalities': args.ignore,
-        'freesurfer_license': args.freesurfer_license
+        'freesurfer_license': args.freesurfer_license,
+        'dcmethod': args.dcmethod
     }
 
     return interface(**kwargs)
@@ -118,6 +119,15 @@ def generate_parser(parser=None):
              'provide your own FreeSurfer license. The license can be '
              'acquired by filling out this form: '
              'https://surfer.nmr.mgh.harvard.edu/registration.html'
+    )
+    parser.add_argument(
+        '--dcmethod', dest='dcmethod',
+        choices=['TOPUP', 'FIELDMAP' 'NONE'],
+        help='Choices: TOPUP, FIELDMAP, NONE '
+             'Specifies method used for fieldmap-based distortion ' 
+             'correction of anatomical and functional data '
+             'Default: automatic detection based on contents '
+             'of fmap dir'
     )
     parser.add_argument(
         '--all-sessions', dest='collect', action='store_true',
@@ -227,7 +237,8 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
               stages=None, bandstop_params=None, check_only=False,
               run_abcd_task=False, study_template=None, cleaning_json=None,
               print_commands=False, ignore_expected_outputs=False,
-              ignore_modalities=[], freesurfer_license=None, session_list=None):
+              ignore_modalities=[], freesurfer_license=None, session_list=None,
+              dcmethod=None):
     """
     main application interface
     :param bids_dir: input bids dataset see "helpers.read_bids_dataset" for
@@ -241,6 +252,14 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
     :param stages: only run a subset of stages.
     :param bandstop_params: tuple of lower and upper bound for stop-band filter
     :param check_only: check expected outputs for each stage then terminate
+    :param study_template: specified head and brain templates for intermediate registration
+    :param cleaning_json: template JSON for use in optional CustomClean stage
+    :param print_commands: flag to print commands only, without running pipeline
+    :param ignore_expected_outputs: continue processing even if expected intermediate outputs are missing
+    :param ignore_modalities: skip processing of specified modalities (func, dwi)
+    :param freesurfer_license: FreeSurfer license file
+    :param session_list: list of BIDS sessions, for filtering what input data to process
+    :param dcmethod: override default fmap distortion correction method  
     :return:
     """
     if not check_only or not print_commands:
@@ -275,6 +294,9 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
         # set session parameters
         if study_template is not None:
             session_spec.set_study_template(*study_template)
+        if dcmethod is not None:
+            session_spec.set_dcmethod(dcmethod)
+        
 
         # create pipelines
         order = []
@@ -365,6 +387,7 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
 
         # run pipelines
         for stage in order:
+            print('abcd-hcp-pipeline v%s' % __version__ )
             print('running %s' % stage.__class__.__name__)
             print(stage)
             stage.run(ncpus)
