@@ -973,13 +973,14 @@ class DiffusionPreprocessing(Stage):
 
 class ExecutiveSummary(Stage):
 
-    script = '{EXECSUMDIR}/summary_tools/executivesummary_wrapper.sh'
+    script = '{EXECSUMDIR}/ExecutiveSummary.py'
 
-    spec = ' --unproc_root={unproc}' \
-           ' --deriv_root={path}' \
-           ' --subject_id={subject}' \
-           ' --ex_summ_dir={summary_dir}' \
-           ' --atlas={t1templatebrain}'
+    spec = ' --bids-input={unproc}' \
+           ' --output-dir={path}' \
+           ' --participant-label={subject}' \
+           ' --session-id={session}' \
+           ' --atlas={t1templatebrain}' \
+           ' --dcan-summary={summary_dir} '
 
     def __init__(self, config):
         super(__class__, self).__init__(config)
