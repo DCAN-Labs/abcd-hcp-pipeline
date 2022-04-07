@@ -266,6 +266,10 @@ class ParameterSettings(object):
         self.usestudytemplate = "true"
         self.studytemplate = study_template
         self.studytemplatebrain = study_template_brain
+    
+    def set_dcmethod(self, value):
+        if value:
+            self.dcmethod = value
 
 
 class Status(object):

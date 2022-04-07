@@ -129,6 +129,9 @@ optional arguments:
                         elderly populations with large ventricles.
   --ignore {func,dwi}   Ignore a modality in processing. Option can be
                         repeated.
+  --dcmethod {TOPUP,FIELDMAP,NONE}
+                        specify fieldmap-based distortion correction method.
+                        Default: auto-detection based on contents of fmap dir
 
 Runtime options:
   Special changes to runtime behaviors. Debugging features.
