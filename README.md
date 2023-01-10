@@ -128,9 +128,9 @@ optional arguments:
                         population differs greatly from average adult, e.g. in
                         elderly populations with large ventricles.
   --ignore {func,dwi}   Ignore a modality in processing. Option can be
-                        repeated.
+                        repeated. (--ignore dwi is DEPRECATED.)
   --dcmethod {TOPUP,FIELDMAP,NONE}
-                        specify fieldmap-based distortion correction method.
+                        Specify fieldmap-based distortion correction method.
                         Default: auto-detection based on contents of fmap dir
 
 Runtime options:
@@ -325,7 +325,7 @@ Temporary/Scratch space:  All intermediate processing is done in the designated 
 
 ### Other notes
 
-Development on DWI processing and diffusion fieldmap support has been discontinued. For processing diffusion data, consider [QSIPrep](https://qsiprep.readthedocs.io/en/latest/) or other alternatives.
+Development on DWI processing and diffusion fieldmap support has been discontinued. For processing diffusion data, consider [QSIPrep](https://qsiprep.readthedocs.io/en/latest/) or other alternatives. In addition, the processing of functional bold data will fail if you have dwi data without field maps. The --ignore dwi flag does not fix this. Currently, we suggest you temporarily remove the dwi data to process your subjects through our pipeline if your data does not have field maps. 
 
 The ideal motion filtering parameters for `--bandstop` have not been robustly tested across repetition times or populations outside of adolescents, so the proper range should be decided upon carefully. Consult reference [3] in the usage for more information.
 
