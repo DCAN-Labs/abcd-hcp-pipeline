@@ -1,0 +1,7 @@
+site_name: ACBD-HCP BIDS fMRI Pipeline
+theme: readthedocs
+plugins:
+  - search
+docs_dir: docs
+nav:
+  - Table of contents: testing.md
