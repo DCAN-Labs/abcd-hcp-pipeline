@@ -4,4 +4,8 @@ plugins:
   - search
 docs_dir: docs
 nav:
+  - Overview: index.md
   - Table of contents: testing.md
+  - Installation: installation.md
+  - Usage: usage.md
+  - Outputs: outputs.md
