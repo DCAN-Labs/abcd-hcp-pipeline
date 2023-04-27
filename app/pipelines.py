@@ -173,6 +173,11 @@ class ParameterSettings(object):
                 self.echodiff = self.gdcoeffs = self.dcmethod = \
                 self.seunwarpdir = self.echospacing = None
 
+        if self.unwarpdir == 'INVALID':
+            self.avgrdcmethod = None
+        else:
+            self.avgrdcmethod = self.dcmethod
+
         if not hasattr(self, 'fmribfcmethod'):
             self.fmribfcmethod = None  # this parameter has not been validated
 
@@ -631,7 +636,7 @@ class PreFreeSurfer(Stage):
            ' --t2samplespacing={t2samplespacing}' \
            ' --unwarpdir={unwarpdir}' \
            ' --gdcoeffs={gdcoeffs}' \
-           ' --avgrdcmethod={dcmethod}' \
+           ' --avgrdcmethod={avgrdcmethod}' \
            ' --topupconfig={topupconfig}' \
            ' --useT2={useT2}' \
            ' --printcom={printcom}' \
@@ -644,7 +649,7 @@ class PreFreeSurfer(Stage):
         # modify t1/t2 inputs for spec
         self.kwargs['t1'] = '@'.join(self.kwargs.get('t1w'))
         self.kwargs['t2'] = '@'.join(self.kwargs.get('t2w', []))
-        if self.kwargs['dcmethod'] == 'TOPUP':
+        if self.kwargs['avgrdcmethod'] == 'TOPUP':
             self.kwargs['sephasepos'], self.kwargs['sephaseneg'] = \
                 self._get_intended_sefmaps()
         else:

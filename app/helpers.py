@@ -277,11 +277,15 @@ def get_readoutdir(metadata):
         raise ValueError('phase encoding direction not recognized: ' + ped)
 
     # convert 3-vector to symbolic unit vector
-    i = max([0, 1, 2], key=lambda x: abs(readoutvec[x]))
-    readoutdir = ['x', 'y', 'z'][i]
-    # TODO: Fix readoutdir algorithm. Arbitratily switched pos to neg for ABCD.
-    if readoutvec[i] > 0:
-        readoutdir += '-'
+    try:
+        i = max([0, 1, 2], key=lambda x: abs(readoutvec[x]))
+        readoutdir = ['x', 'y', 'z'][i]
+        # TODO: Fix readoutdir algorithm. Arbitratily switched pos to neg for ABCD.
+        if readoutvec[i] > 0:
+            readoutdir += '-'
+    except:
+        print('Could not read readoutdir')
+        readoutdir = 'INVALID'
 
     return readoutdir
 
