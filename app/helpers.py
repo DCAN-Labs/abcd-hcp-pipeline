@@ -269,24 +269,24 @@ def get_readoutdir(metadata):
     try:
         iopd = metadata['ImageOrientationPatientDICOM']
         ped = metadata['InPlanePhaseEncodingDirectionDICOM']
+    
+        # readout direction is opposite the in plane phase encoding direction
+        if ped == 'ROW':
+            readoutvec = iopd[3:]
+        elif ped == 'COL':
+            readoutvec = iopd[:3]
+        else:
+            raise ValueError('phase encoding direction not recognized: ' + ped)
+
+        # convert 3-vector to symbolic unit vector
+        i = max([0, 1, 2], key=lambda x: abs(readoutvec[x]))
+        readoutdir = ['x', 'y', 'z'][i]
+        # TODO: Fix readoutdir algorithm. Arbitratily switched pos to neg for ABCD.
+        if readoutvec[i] > 0:
+            readoutdir += '-'
     except:
         print('Could not read readoutdir')
         readoutdir = 'INVALID'
-    
-    # readout direction is opposite the in plane phase encoding direction
-    if ped == 'ROW':
-        readoutvec = iopd[3:]
-    elif ped == 'COL':
-        readoutvec = iopd[:3]
-    else:
-        raise ValueError('phase encoding direction not recognized: ' + ped)
-
-    # convert 3-vector to symbolic unit vector
-    i = max([0, 1, 2], key=lambda x: abs(readoutvec[x]))
-    readoutdir = ['x', 'y', 'z'][i]
-    # TODO: Fix readoutdir algorithm. Arbitratily switched pos to neg for ABCD.
-    if readoutvec[i] > 0:
-        readoutdir += '-'
 
     return readoutdir
 
