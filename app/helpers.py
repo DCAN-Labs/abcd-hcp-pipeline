@@ -266,8 +266,13 @@ def get_readoutdir(metadata):
     :param metadata: grabbids metadata dict.
     :return: unwarp dir in cartesian (world) coordinates.
     """
-    iopd = metadata['ImageOrientationPatientDICOM']
-    ped = metadata['InPlanePhaseEncodingDirectionDICOM']
+    try:
+        iopd = metadata['ImageOrientationPatientDICOM']
+        ped = metadata['InPlanePhaseEncodingDirectionDICOM']
+    except:
+        print('Could not read readoutdir')
+        readoutdir = 'INVALID'
+    
     # readout direction is opposite the in plane phase encoding direction
     if ped == 'ROW':
         readoutvec = iopd[3:]
@@ -277,15 +282,11 @@ def get_readoutdir(metadata):
         raise ValueError('phase encoding direction not recognized: ' + ped)
 
     # convert 3-vector to symbolic unit vector
-    try:
-        i = max([0, 1, 2], key=lambda x: abs(readoutvec[x]))
-        readoutdir = ['x', 'y', 'z'][i]
-        # TODO: Fix readoutdir algorithm. Arbitratily switched pos to neg for ABCD.
-        if readoutvec[i] > 0:
-            readoutdir += '-'
-    except:
-        print('Could not read readoutdir')
-        readoutdir = 'INVALID'
+    i = max([0, 1, 2], key=lambda x: abs(readoutvec[x]))
+    readoutdir = ['x', 'y', 'z'][i]
+    # TODO: Fix readoutdir algorithm. Arbitratily switched pos to neg for ABCD.
+    if readoutvec[i] > 0:
+        readoutdir += '-'
 
     return readoutdir
 
