@@ -1,4 +1,4 @@
-site_name: ACBD-HCP BIDS fMRI Pipeline
+site_name: ABCD-HCP BIDS fMRI Pipeline
 theme: readthedocs
 plugins:
   - search
