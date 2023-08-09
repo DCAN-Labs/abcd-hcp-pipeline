@@ -1,0 +1,29 @@
+name: Feature Request
+description: Suggest an idea for this project
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas for improvements are always appreciated!
+  - type: textarea
+    id: summary
+    attributes:
+      label: A short summary of what you would like to see in the abcd-hcp pipeline.
+    validations:
+      required: true
+  - type: dropdown
+    id: interest
+    attributes:
+      label: Do you have any interest in helping implement the feature?
+      description: Help is always welcome :)
+      options:
+        - Yes!
+        - Yes, but I would need guidance
+        - No :(
+    validations:
+      required: true
+  - type: textarea
+    id: addinfo
+    attributes:
+      label: Add any additional information or context about the request here.

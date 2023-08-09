@@ -1,0 +1,46 @@
+name: Bug Report
+description: File a report to help us improve
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Also tell us, what did you expect to happen?
+      placeholder: Tell us what you see!
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: What command did you use?
+      description: This helps us replicate the problem. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: What version of the abcd-hcp pipeline are you using?
+    validations:
+      required: true
+  - type: textarea
+    id: tree
+    attributes:
+      label: Directory Structure
+      description: Please include a tree output to show your directory structure. [See this link for assistance](https://www.cyberciti.biz/faq/linux-show-directory-structure-command-line/) 
+      placeholder: Directory Structure
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+  - type: textarea
+    id: addinfo
+    attributes:
+      label: Add any additional information or context about the problem here.
