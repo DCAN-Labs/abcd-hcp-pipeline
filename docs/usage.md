@@ -136,11 +136,12 @@ To call using Docker:
     docker run --rm \
         -v /path/to/bids_dataset:/bids_input:ro \
         -v /path/to/outputs:/output \
-        -v /path/to/freesurfer/license:/license \
-        dcanumn/abcd-hcp-pipeline /bids_input /output --freesurfer-license=/license.txt [OPTIONS]
+        -v /path/to/freesurfer/license.txt:/opt/freesurfer/license.txt \
+        dcanumn/abcd-hcp-pipeline /bids_input /output --freesurfer-license=/opt/freesurfer/license.txt [OPTIONS]
 
 Note that the mount flag `-v` follows `docker run`, as it is a Docker options whereas `--freesurfer-license` follows `dcanumn/abcd-hcp-pipeline`, as it is an option passed into the pipeline itself.
 
+If you are experiencing file system permission issues on outputs, setting the `--user` flag to `"$(id -u):$(id -g)"` for the docker run command may help.
 
 ## Example: minimal run command (Singularity)
 
