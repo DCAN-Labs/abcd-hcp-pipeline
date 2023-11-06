@@ -19,6 +19,11 @@ and applications are explained in detail at http://bids.neuroimaging.io/
                               output files from the pipeline, which is also where
                               logs are stored.
 
+    required arguments:
+        --session-id SESSION_ID [SESSION_ID ...]
+                              filter input dataset by session id. 
+                              A session id does not include "ses-". (REQUIRED)
+
     optional arguments:
         -h, --help            show this help message and exit
         --version, -v         show program's version number and exit
@@ -26,11 +31,6 @@ and applications are explained in detail at http://bids.neuroimaging.io/
                               Optional list of participant IDs to run. Default is
                               all IDs found under the BIDS input directory. The
                               participant label does not include the "sub-" prefix
-  
-    --session-id SESSION_ID [SESSION_ID ...]
-                              filter input dataset by session id. Default is all ids
-                              found under the subject input directory(s). A session
-                              id does not include "ses-"
  
     --freesurfer-license LICENSE_FILE
                               If using docker or singularity, you will need to
