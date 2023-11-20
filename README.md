@@ -6,3 +6,4 @@ This software provides an interface for processing [BIDS-formatted MRI datasets]
 
 Check out our documentation [here](https://abcd-hcp-pipeline.readthedocs.io/en/latest/)
 
+Docker images are available at the [DCAN Docker Hub repo](https://hub.docker.com/r/dcanumn/abcd-hcp-pipeline).
