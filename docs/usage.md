@@ -182,11 +182,11 @@ We have also requested 4 cores for faster processing: `--ncpus 4`
 
 `--abcd-task` is not compatible with a BIDS folder structure, e.g. [DCAN file-mapper](https://github.com/DCAN-Labs/file-mapper) should **not** be used to map the pipeline output into a BIDS derivative if this option is to be used. **Note**: this tag is now deprecated and [DCAN abcd-tfmri-pipeline](https://github.com/DCAN-Labs/abcd-bids-tfmri-pipeline) is now our recommended tool for task analysis of this pipeline's output. 
 
-## Supported and unsupported BIDS metadata fields
+## Limitations on input BIDS datasets
 
-This pipeline requires input be a [BIDS-formatted MRI dataset](https://bids-specification.readthedocs.io/en/stable/).
+This pipeline requires input be a [BIDS-formatted MRI dataset](https://bids-specification.readthedocs.io/en/stable/). Additionally, any functional data **must** be in a subdirectory of a BIDS session directory (e.g. a dataset with `sub-A/ses-01/func` is supported, but `sub-A/func` is not).   
 
-Be aware that the pipeline only recognizes a subset of the fields included in the BIDS specification for MRI and modality-agnostic files. Input with unrecognized BIDS fields may cause errors or other unexpected behavior. 
+Also be aware that the pipeline only recognizes a subset of the BIDS entities, modalities and suffixes in the specification for MRI and modality-agnostic files. Unsupported input may result in errors or other unexpected behavior. 
 
 Recognized fields include the following:
 
