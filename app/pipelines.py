@@ -742,7 +742,7 @@ class PostFreeSurfer(Stage):
            ' --template2mmmask={template2mmmask}' \
            ' --useStudyTemplate={usestudytemplate}' \
            ' --StudyTemplate={studytemplate}' \
-           ' --StudyTemplateBrain={studytemplatebrain}'
+           ' --StudyTemplateBrain={studytemplatebrain}' \
            ' --printcom={printcom}'
 
     def __init__(self, config):
