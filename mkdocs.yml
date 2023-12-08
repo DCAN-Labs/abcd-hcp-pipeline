@@ -8,3 +8,4 @@ nav:
   - Installation: installation.md
   - Usage: usage.md
   - Outputs: outputs.md
+  - BIDS Directory Structure: bids-directory-structure.md
