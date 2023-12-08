@@ -23,7 +23,7 @@ RUN chmod -R 775 /app
 RUN pip3 install -r "/app/requirements.txt"
 
 # dcan hcp code
-RUN git clone -b 'v2.0.0' --single-branch --depth 1 https://github.com/DCAN-Labs/DCAN-HCP.git /opt/pipeline
+RUN git clone -b 'v2.0.1' --single-branch --depth 1 https://github.com/DCAN-Labs/DCAN-HCP.git /opt/pipeline
 # abcd task prep
 RUN git clone -b 'v0.0.0' --single-branch --depth 1 https://github.com/DCAN-Labs/abcd_task_prep.git ABCD_tfMRI
 
