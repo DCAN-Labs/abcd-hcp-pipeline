@@ -186,7 +186,7 @@ We have also requested 4 cores for faster processing: `--ncpus 4`
 
 This pipeline requires input be a [BIDS-formatted MRI dataset](https://bids-specification.readthedocs.io/en/stable/). Additionally, any functional data **must** be in a subdirectory of a BIDS session directory (e.g. a dataset with `sub-A/ses-01/func` is supported, but `sub-A/func` is not). 
 
-### Example BIDS dataset (with "PEPolar" spin echo fieldmaps; for more info see section below ):
+### Example BIDS dataset (with "PEpolar" spin-echo fieldmaps; for more info see section below ):
 
 ```
 └─ BIDS_input/ 
@@ -236,14 +236,14 @@ Consult [the BIDS site](https://bids.neuroimaging.io/) for more information and 
 
 For distortion correction of anatomical and functional data using [FSL topup](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/topup), the input `fmap` directory must contain either: 
 
-- "PEPolar" spin echo fieldmap images as specified [here](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#fieldmap-data); if present, topup correction is enabled by default.
+- "PEpolar" spin-echo fieldmap images as specified [here](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#fieldmap-data); if present, topup correction is enabled by default.
 - The "Two phase maps and two magnitude images" fieldmap scheme as specified [here](https://bids-specification.readthedocs.io/en/stable/modality-specific-files/magnetic-resonance-imaging-data.html#case-2-two-phase-maps-and-two-magnitude-images) ; if present, gradient echo distortion correction is enabled by default (unless topup correction is enabled). 
 
 The spatial dimensions and voxel size of the fieldmaps must be the same as the corresponding runs in the subject's `func` directory, as resampling is not implemented. 
 
-To specifiy the mapping between spin echo fieldmap run and the functional runs to be distortion-corrected, include an `IntendedFor` key/value pair in the BIDS sidecar JSON of the fieldmap run. For details, see the relevant section of the [BIDS specification](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#using-intendedfor-metadata). 
+To specify the mapping between spin-echo fieldmap runs and the functional runs to be distortion-corrected, include an `IntendedFor` key/value pair in the BIDS sidecar JSON of the fieldmap run. For details, see the relevant section of the [BIDS specification](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#using-intendedfor-metadata). 
 
-This software will resolve to using spin echo fieldmaps if they are present, then gradient echo fieldmaps, then None, consistent with best observed performances.
+This software will resolve to using spin-echo fieldmaps if they are present, then gradient echo fieldmaps, then None, consistent with best observed performances.
 
 ## Functional runs with different acquisition parameters 
 
