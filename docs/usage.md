@@ -178,17 +178,45 @@ We have also requested 4 cores for faster processing: `--ncpus 4`
 
 ## Pipeline options for specific datasets
 
-`--study-template`: For elderly or neurodegenerative populations, adding a "study template" tends to improve results. This is generally constructed using ANTs to build an average template of your subjects. this template is then used as an intermediate warp stage, assisting in nonlinear registration of subjects with large ventricles. 
+`--study-template`: For elderly or neurodegenerative populations, using a "study template" tends to improve registration of subject anatomical volumes to atlas. This template is generally constructed using ANTs to build an average of your subjects. It is then used as an intermediate warp stage to assist in nonlinear registration to atlas.
 
 `--abcd-task` is not compatible with a BIDS folder structure, e.g. [DCAN file-mapper](https://github.com/DCAN-Labs/file-mapper) should **not** be used to map the pipeline output into a BIDS derivative if this option is to be used. **Note**: this tag is now deprecated and [DCAN abcd-tfmri-pipeline](https://github.com/DCAN-Labs/abcd-bids-tfmri-pipeline) is now our recommended tool for task analysis of this pipeline's output. 
 
-## Limitations on input BIDS datasets
+##  About BIDS datasets for input
 
-This pipeline requires input be a [BIDS-formatted MRI dataset](https://bids-specification.readthedocs.io/en/stable/). Additionally, any functional data **must** be in a subdirectory of a BIDS session directory (e.g. a dataset with `sub-A/ses-01/func` is supported, but `sub-A/func` is not).   
+This pipeline requires input be a [BIDS-formatted MRI dataset](https://bids-specification.readthedocs.io/en/stable/). Additionally, any functional data **must** be in a subdirectory of a BIDS session directory (e.g. a dataset with `sub-A/ses-01/func` is supported, but `sub-A/func` is not). 
+
+### Example BIDS dataset (with "PEpolar" spin-echo fieldmaps; for more info see section below ):
+
+```
+└─ BIDS_input/ 
+  ├─ dataset_description.json
+  ├─ README
+  ├─ CHANGES
+  ├─ participants.tsv
+  ├─ task-<TASKNAME>_bold.json
+  └─ sub-<SUBID>/
+    └─ ses-<SESID>/
+      └─ anat/
+         ├─ sub-<SUBID>_ses-<SESID>[_run-01]_T1w.json
+         └─ sub-<SUBID>_ses-<SESID>[_run-01]_T1w.nii.gz
+         ├─ sub-<SUBID>_ses-<SESID>[_run-01]_T2w.json
+         └─ sub-<SUBID>_ses-<SESID>[_run-01]_T2w.nii.gz
+      └─ fmap/
+         ├─ sub-SUBID_ses-<SESID>_dir-AP[_run-01]_epi.json
+         ├─ sub-SUBID_ses-<SESID>_dir-AP[_run-01]_epi.nii.gz
+         ├─ sub-SUBID_ses-<SESID>_dir-PA[_run-01]_epi.json
+         └─ sub-SUBID_ses-<SESID>_dir-PA[_run-01]_epi.nii.gz
+      └─ func/
+         ├─ sub-<SUBID>_ses-<SESID>_task-<TASKNAME>_run-01_bold.json
+         ├─ sub-<SUBID>_ses-<SESID>_task-<TASKNAME>_run-01_bold.nii.gz
+         ├─ sub-<SUBID>_ses-<SESID>_task-<TASKNAME>_run-02_bold.json
+         └─ sub-<SUBID>_ses-<SESID>_task-<TASKNAME>_run-02_bold.nii.gz
+```
 
 Also be aware that the pipeline only recognizes a subset of the BIDS entities, modalities and suffixes in the specification for MRI and modality-agnostic files. Unsupported input may result in errors or other unexpected behavior. 
 
-Recognized fields include the following:
+Recognized entities, modalities and suffixes include the following:
 
 general: `sub-`,`ses-`
 
@@ -206,16 +234,19 @@ Consult [the BIDS site](https://bids.neuroimaging.io/) for more information and 
 
 ## Fieldmap support for FSL topup / distortion correction
 
-For distortion correction of anatomical and functional data using [FSL topup](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/topup), the input `fmap` directory must contain BIDS-compliant "PEPolar" spin echo fieldmap images as specified [here](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#fieldmap-data). If present, topup correction is automatically enabled. 
+For distortion correction of anatomical and functional data using [FSL topup](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/topup), the input `fmap` directory must contain either: 
 
-The spatial dimensions and voxel size of the spin echo fieldmaps must be the same as the corresponding runs in the subject's `func` directory as resampling is not implemented. 
+- "PEpolar" spin-echo fieldmap images as specified [here](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#fieldmap-data); if present, topup correction is enabled by default.
+- The "Two phase maps and two magnitude images" fieldmap scheme as specified [here](https://bids-specification.readthedocs.io/en/stable/modality-specific-files/magnetic-resonance-imaging-data.html#case-2-two-phase-maps-and-two-magnitude-images) ; if present, gradient echo distortion correction is enabled by default (unless topup correction is enabled). 
 
-For specified use of spin echo field maps, i.e. mapping a pair to each individual functional run, it is necessary to insert the `IntendedFor` field into the BIDS input sidecar JSONs, which specifies which functional run(s) a field map is intended for. This field is explained in greater detail within the [BIDS specification](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#using-intendedfor-metadata). 
+The spatial dimensions and voxel size of the fieldmaps must be the same as the corresponding runs in the subject's `func` directory, as resampling is not implemented. 
 
-This software will resolve to using spin echo field maps if they are present, then gradient field maps, then None, consistent with best observed performances. Note that there are no errors or warnings if multiple modalities are present. 
+To specify the mapping between spin-echo fieldmap runs and the functional runs to be distortion-corrected, include an `IntendedFor` key/value pair in the BIDS sidecar JSON of the fieldmap run. For details, see the relevant section of the [BIDS specification](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/01-magnetic-resonance-imaging-data.html#using-intendedfor-metadata). 
+
+This software will resolve to using spin-echo fieldmaps if they are present, then gradient echo fieldmaps, then None, consistent with best observed performances.
 
 ## Functional runs with different acquisition parameters 
 
-To avoid errors, acquisition parameters (e.g. voxel dimensions, TR, phase encoding direction) should be identical across functional runs within a BIDS session. An exception is the number of frames, which does not need to be the same for all runs. 
+To avoid errors, acquisition parameters (e.g. voxel dimensions, TR, phase encoding direction) should be identical across functional runs within a BIDS session. (The number of frames does not need to be the same for all runs.) 
 
-We recommend that sets of runs with differing acquisition parameters be processed as separate BIDS sessions. Also be aware the pipeline does not recognize BIDS field such as `acq-` and `desc-` so those should not be used to differentiate runs with different acquisition parameters. 
+We recommend that sets of runs with differing acquisition parameters be processed as separate BIDS sessions. Also be aware the pipeline does not recognize BIDS entities such as `acq-` and `desc-` so those should not be used to differentiate runs with different acquisition parameters. 
