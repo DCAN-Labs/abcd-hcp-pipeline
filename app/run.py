@@ -189,10 +189,9 @@ def generate_parser(parser=None):
     )
     extras.add_argument(
         '--custom-clean', metavar='JSON', dest='cleaning_json',
-        help='Runs DCAN cleaning script after the pipeline completes '
-             'successfully to delete pipeline outputs based on '
-             'the file structure specified in the custom-clean JSON. '
-             'Required for the custom clean stage.'
+        help= 'Template JSON specifying files to be removed '
+             'in the optional CustomClean stage. Required if '
+             'CustomClean is in the list of stages to be run. '
     )
     extras.add_argument(
         '--abcd-task', action='store_true',
