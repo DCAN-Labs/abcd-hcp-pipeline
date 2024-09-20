@@ -289,6 +289,9 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
         summary = True
 
         session_spec = ParameterSettings(session, out_dir)
+        if not run_func:
+            anat_only = True
+            session_spec.set_anat_only(anat_only)
 
         # set session parameters
         if study_template is not None:
