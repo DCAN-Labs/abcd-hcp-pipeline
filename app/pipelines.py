@@ -91,7 +91,7 @@ class ParameterSettings(object):
     # cont frames
     contiguous_frames = 5
 
-    def __init__(self, bids_data, output_directory):
+    def __init__(self, bids_data, fmapgeneralelectric_flag, output_directory):
         """
         Specification to run pipeline on a single subject session.
         :param bids_data: yielded spec from read_bids_dataset
@@ -100,6 +100,7 @@ class ParameterSettings(object):
 
         # input bids data struct
         self.bids_data = bids_data
+        # print("bids_data:",self.bids_data)
         # @ parameters read from bids @ #
         self.t1w = self.bids_data['t1w']
         self.t1samplespacing = get_realdwelltime(
@@ -120,58 +121,75 @@ class ParameterSettings(object):
         self.unwarpdir = get_readoutdir(self.bids_data['t1w_metadata'])
         fmap_types = {'magnitude', 'magnitude1', 'magnitude2', 'phasediff',
                  'phase1', 'phase2', 'fieldmap'}
-        if 'epi' in self.bids_data['types']:
-            self.dcmethod = 'TOPUP'
-            # spin echo field map spacing @TODO read during volume per fmap?
-            self.echospacing = self.bids_data['fmap_metadata']['positive'][0][
-                'EffectiveEchoSpacing']
-            self.echospacing = ('%.12f' % self.echospacing).rstrip('0')
-            # distortion correction phase encoding direction 
-            # somewhat arbitrary in PreFreeSurfer
-            if self.bids_data['func']:
-                # take phase encoding direction from first functional.
-                self.seunwarpdir = ijk_to_xyz(
-                    self.bids_data['func_metadata'][0]['PhaseEncodingDirection'])
-            else:
-                # if no functional data is provided, use positive spin echo
-                self.seunwarpdir = ijk_to_xyz(
-                    self.bids_data['fmap_metadata']['positive'][0][
-                        'PhaseEncodingDirection'])
-
-            # set unused fmap parameters to none
-            self.fmapmag = self.fmapphase = self.fmapgeneralelectric = \
-                self.echodiff = self.gdcoeffs = None
-
-        elif fmap_types.intersection(set(self.bids_data['types'])):
-            self.dcmethod = 'FIELDMAP'
-            types = self.bids_data['fmap'].keys()
-            # gradient field map delta TE
-            if 'magnitude1' in types and 'magnitude2' in types:
-                self.fmapmag = self.bids_data['fmap']['magnitude1']
-                self.echodiff = self.bids_data['fmap_metadata'][
-                    'magnitude2']['EchoTime'] - self.bids_data[
-                    'fmap_metadata']['magnitude1']['EchoTime']
-                self.echodiff = '%g' % (self.echodiff * 1000.)  # milliseconds
-                self.fmapgeneralelectric = None
-            elif 'magnitude' in types:
-                raise NotImplementedError
-            else:
-                raise Exception('No FM magnitude image identified')
-
-            if 'phasediff' in types:
-                self.fmapphase = self.bids_data['fmap']['phasediff']
-            elif 'phase1' in types and 'phase2' in types:
-                raise NotImplementedError
-            else:
-                raise Exception('No FM phase image identified')
-            # set unused spin echo parameters to none
-            self.seunwarpdir = self.gdcoeffs = self.echospacing = None
-
+        if fmapgeneralelectric_flag:
+            self.dcmethod = 'GeneralElectricFieldMap'
+            self.fmapgeneralelectric = self.bids_data['fmap']['negative'][0]
+            print("self.fmapgeneralelectric:",self.fmapgeneralelectric)
+            self.fmapmag = self.fmapphase = \
+            self.echodiff = self.gdcoeffs = self.dcmethod = \
+            self.seunwarpdir = self.echospacing = None
         else:
-            # all distortion correction parameters set to none
-            self.fmapmag = self.fmapphase = self.fmapgeneralelectric = \
-                self.echodiff = self.gdcoeffs = self.dcmethod = \
-                self.seunwarpdir = self.echospacing = None
+            if 'epi' in self.bids_data['types']:
+                self.dcmethod = 'TOPUP'
+                # spin echo field map spacing @TODO read during volume per fmap?
+                self.echospacing = self.bids_data['fmap_metadata']['positive'][0][
+                    'EffectiveEchoSpacing']
+                self.echospacing = ('%.12f' % self.echospacing).rstrip('0')
+                # distortion correction phase encoding direction 
+                # somewhat arbitrary in PreFreeSurfer
+                if self.bids_data['func']:
+                    # take phase encoding direction from first functional.
+                    self.seunwarpdir = ijk_to_xyz(
+                        self.bids_data['func_metadata'][0]['PhaseEncodingDirection'])
+                else:
+                    # if no functional data is provided, use positive spin echo
+                    self.seunwarpdir = ijk_to_xyz(
+                        self.bids_data['fmap_metadata']['positive'][0][
+                            'PhaseEncodingDirection'])
+                # use the GE fmap if flag is set to 1
+                if fmapgeneralelectric_flag:
+                    self.fmapgeneralelectric = self.bids_data['fmap']['negative'][0]
+                    print("self.fmapgeneralelectric:",self.fmapgeneralelectric)
+                    self.fmapmag = self.fmapphase = self.echodiff = self.gdcoeffs = None
+                else: 
+                    # set unused fmap parameters to none
+                    self.fmapmag = self.fmapphase = self.fmapgeneralelectric = \
+                        self.echodiff = self.gdcoeffs = None
+
+            elif fmap_types.intersection(set(self.bids_data['types'])):
+                self.dcmethod = 'FIELDMAP'
+                types = self.bids_data['fmap'].keys()
+                # gradient field map delta TE
+                if 'magnitude1' in types and 'magnitude2' in types:
+                    self.fmapmag = self.bids_data['fmap']['magnitude1']
+                    self.echodiff = self.bids_data['fmap_metadata'][
+                        'magnitude2']['EchoTime'] - self.bids_data[
+                        'fmap_metadata']['magnitude1']['EchoTime']
+                    self.echodiff = '%g' % (self.echodiff * 1000.)  # milliseconds
+                    if self.fmapgeneralelectric:
+                        self.fmapgeneralelectric = self.bids_data['fmap']['negative'][0]
+                        print("self.fmapgeneralelectric",self.fmapgeneralelectric)
+                    else:
+                        self.fmapgeneralelectric = None
+                elif 'magnitude' in types:
+                    raise NotImplementedError
+                else:
+                    raise Exception('No FM magnitude image identified')
+
+                if 'phasediff' in types:
+                    self.fmapphase = self.bids_data['fmap']['phasediff']
+                elif 'phase1' in types and 'phase2' in types:
+                    raise NotImplementedError
+                else:
+                    raise Exception('No FM phase image identified')
+                # set unused spin echo parameters to none
+                self.seunwarpdir = self.gdcoeffs = self.echospacing = None
+
+            else:
+                # all distortion correction parameters set to none
+                self.fmapmag = self.fmapphase = self.fmapgeneralelectric = \
+                    self.echodiff = self.gdcoeffs = self.dcmethod = \
+                    self.seunwarpdir = self.echospacing = None
 
         if not hasattr(self, 'fmribfcmethod'):
             self.fmribfcmethod = None  # this parameter has not been validated
@@ -255,6 +273,13 @@ class ParameterSettings(object):
         for arg in args:
             val = val[arg]
         return val
+    
+    def set_anat_only(self, ignore_modalities):
+        if 'func' in ignore_modalities:
+            # Assume there is no 'func' data...
+            self.unproc = None
+            # and no output from dcan-bold-proc.
+            self.summary_dir = None
 
     def set_study_template(self, study_template, study_template_brain):
         """
@@ -266,10 +291,6 @@ class ParameterSettings(object):
         self.usestudytemplate = "true"
         self.studytemplate = study_template
         self.studytemplatebrain = study_template_brain
-    
-    def set_dcmethod(self, value):
-        if value:
-            self.dcmethod = value
 
 
 class Status(object):
@@ -741,8 +762,6 @@ class PostFreeSurfer(Stage):
            ' --templatemask={templatemask}' \
            ' --template2mmmask={template2mmmask}' \
            ' --useStudyTemplate={usestudytemplate}' \
-           ' --StudyTemplate={studytemplate}' \
-           ' --StudyTemplateBrain={studytemplatebrain}' \
            ' --printcom={printcom}'
 
     def __init__(self, config):

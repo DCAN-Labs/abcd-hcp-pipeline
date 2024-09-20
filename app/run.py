@@ -25,7 +25,7 @@ NeuroImage, 62:782-90, 2012
 [6] Avants, BB et al. The Insight ToolKit image registration framework. Front
 Neuroinform. 2014 Apr 28;8:44. doi: 10.3389/fninf.2014.00044. eCollection 2014.
 """
-__version__ = "0.1.5"
+__version__ = "0.1.4"
 
 import argparse
 import os
@@ -49,8 +49,8 @@ def _cli():
     kwargs = {
         'bids_dir': args.bids_dir,
         'output_dir': args.output_dir,
+        'fmapgeneralelectric': args.fmapgeneralelectric,
         'subject_list': args.subject_list,
-        'session_list': args.session_list,
         'collect': args.collect,
         'ncpus': args.ncpus,
         'stages': args.stages,
@@ -62,10 +62,10 @@ def _cli():
         'print_commands': args.print,
         'ignore_expected_outputs': args.ignore_expected_outputs,
         'ignore_modalities': args.ignore,
-        'freesurfer_license': args.freesurfer_license,
-        'dcmethod': args.dcmethod
+        'freesurfer_license': args.freesurfer_license
     }
-
+    print("inside new run - cli fn")
+    print(kwargs) 
     return interface(**kwargs)
 
 
@@ -97,6 +97,10 @@ def generate_parser(parser=None):
              'files from the pipeline, which is also where logs are stored.'
     )
     parser.add_argument(
+        '--fmapgeneralelectric', action='store_true', 
+        help='Path to GE Fielmap for tackiling FMRIVolume mismatch error in GE Scans.'
+    )
+    parser.add_argument(
         '--version', '-v', action='version', version='%(prog)s ' + __version__
     )
     parser.add_argument(
@@ -106,28 +110,12 @@ def generate_parser(parser=None):
              'does not include the "sub-" prefix'
     )
     parser.add_argument(
-        '--session-id', dest='session_list', nargs='*',
-        metavar='LABEL',
-        help='filter input dataset by session id. Default is all ids '
-             'found under the subject input directory(s).  A session id '
-             'does not include "ses-"'
-    )
-    parser.add_argument(
         '--freesurfer-license', dest='freesurfer_license',
         metavar='LICENSE_FILE',
         help='If using docker or singularity, you will need to acquire and '
              'provide your own FreeSurfer license. The license can be '
              'acquired by filling out this form: '
              'https://surfer.nmr.mgh.harvard.edu/registration.html'
-    )
-    parser.add_argument(
-        '--dcmethod', dest='dcmethod',
-        choices=['TOPUP', 'FIELDMAP', 'NONE'],
-        help='Choices: TOPUP, FIELDMAP, NONE '
-             'Specifies method used for fieldmap-based distortion ' 
-             'correction of anatomical and functional data '
-             'Default: automatic detection based on contents '
-             'of fmap dir'
     )
     parser.add_argument(
         '--all-sessions', dest='collect', action='store_true',
@@ -179,8 +167,8 @@ def generate_parser(parser=None):
              'range for participant group respiratory rate (breaths per '
              'minute), or to match bids physio data directly [3].  These '
              'parameters are highly recommended for data acquired with a '
-             'frequency of greater than 1 Hz (TR less than 1 second). '
-             'Default is no filter.'
+             'frequency of approx. 1 Hz or more (TR<=1.0). Default is no '
+             'filter.'
     )
     extras = parser.add_argument_group(
         'Special pipeline options',
@@ -189,9 +177,10 @@ def generate_parser(parser=None):
     )
     extras.add_argument(
         '--custom-clean', metavar='JSON', dest='cleaning_json',
-        help= 'Template JSON specifying files to be removed '
-             'in the optional CustomClean stage. Required if '
-             'CustomClean is in the list of stages to be run. '
+        help='Runs DCAN cleaning script after the pipeline completes '
+             'successfully to delete pipeline outputs based on '
+             'the file structure specified in the custom-clean JSON. '
+             'Required for the custom clean stage.'
     )
     extras.add_argument(
         '--abcd-task', action='store_true',
@@ -232,12 +221,11 @@ def generate_parser(parser=None):
     return parser
 
 
-def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
+def interface(bids_dir, output_dir, fmapgeneralelectric, subject_list=None, collect=False, ncpus=1,
               stages=None, bandstop_params=None, check_only=False,
               run_abcd_task=False, study_template=None, cleaning_json=None,
               print_commands=False, ignore_expected_outputs=False,
-              ignore_modalities=[], freesurfer_license=None, session_list=None,
-              dcmethod=None):
+              ignore_modalities=[], freesurfer_license=None):
     """
     main application interface
     :param bids_dir: input bids dataset see "helpers.read_bids_dataset" for
@@ -245,35 +233,31 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
     :param output_dir: output folder
     :param subject_list: subject and session list filtering.  See
     "helpers.read_bids_dataset" for more information.
-    :param session_list: session list filtering. See "helpers.read_bids_dataset".
     :param collect: treats each subject as having only one session.
     :param ncpus: number of cores for parallelized processing.
     :param stages: only run a subset of stages.
     :param bandstop_params: tuple of lower and upper bound for stop-band filter
     :param check_only: check expected outputs for each stage then terminate
-    :param study_template: specified head and brain templates for intermediate registration
-    :param cleaning_json: template JSON for use in optional CustomClean stage
-    :param print_commands: flag to print commands only, without running pipeline
-    :param ignore_expected_outputs: continue processing even if expected intermediate outputs are missing
-    :param ignore_modalities: skip processing of specified modalities (func, dwi)
-    :param freesurfer_license: FreeSurfer license file
-    :param session_list: list of BIDS sessions, for filtering what input data to process
-    :param dcmethod: override default fmap distortion correction method  
     :return:
     """
-    if not check_only or not print_commands:
-        validate_license(freesurfer_license)
+    ##uncomment when running via singularity##########################
+    # if not check_only or not print_commands:
+    #     validate_license(freesurfer_license)
+    #####################################################################
+    
     # read from bids dataset
     assert os.path.isdir(bids_dir), bids_dir + ' is not a directory!'
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
     session_generator = read_bids_dataset(
-        bids_dir, subject_list=subject_list, 
-        collect_on_subject=collect, session_list=session_list
+        bids_dir, subject_list=subject_list, collect_on_subject=collect
     )
 
+    print("fmapGE:", fmapgeneralelectric)
     # run each session in serial
     for session in session_generator:
+        print("session:")
+        print(session)
         # setup session configuration
         out_dir = os.path.join(
             output_dir,
@@ -288,14 +272,15 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
         run_dwi = 'dwi' in modes and 'dwi' not in ignore_modalities
         summary = True
 
-        session_spec = ParameterSettings(session, out_dir)
+        session_spec = ParameterSettings(session, fmapgeneralelectric, out_dir)
 
+        session_spec.set_anat_only(ignore_modalities)
+
+        # print("session_spec:")
+        # print(session_spec)
         # set session parameters
         if study_template is not None:
             session_spec.set_study_template(*study_template)
-        if dcmethod is not None:
-            session_spec.set_dcmethod(dcmethod)
-        
 
         # create pipelines
         order = []
@@ -386,12 +371,12 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
 
         # run pipelines
         for stage in order:
-            print('abcd-hcp-pipeline v%s' % __version__ )
             print('running %s' % stage.__class__.__name__)
             print(stage)
             stage.run(ncpus)
 
 
 if __name__ == '__main__':
+    print("in new_run.py")
     _cli()
 
