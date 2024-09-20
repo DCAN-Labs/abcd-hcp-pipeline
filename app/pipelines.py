@@ -256,6 +256,13 @@ class ParameterSettings(object):
             val = val[arg]
         return val
 
+    def set_anat_only(self, anat_only=False):
+        if anat_only:
+            # Assume there is no 'func' data...
+            self.unproc = None
+            # and no output from dcan-bold-proc.
+            self.summary_dir = None
+
     def set_study_template(self, study_template, study_template_brain):
         """
         set template for intermediate registration steps.
