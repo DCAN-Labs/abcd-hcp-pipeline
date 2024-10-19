@@ -38,12 +38,12 @@ export MSMBINDIR=/opt/msm/Ubuntu
 
 
 # Set up DCAN Environment Variables
-export MCRROOT=/opt/mcr/v96
+export MCRROOT=/opt/mcr/R2023b
 export DCANBOLDPROCDIR=/opt/dcan-tools/dcan_bold_proc
 export DCANBOLDPROCVER=DCANBOLDProc_v4.0.0
 export EXECSUMDIR=/opt/dcan-tools/executivesummary
 export CUSTOMCLEANDIR=/opt/dcan-tools/customclean
-export MATLAB_PREFDIR=/tmp/.matlab/R2019a
+export MATLAB_PREFDIR=/tmp/.matlab/R2023b
 export ABCDTASKPREPDIR=/opt/dcan-tools/ABCD_tfMRI
 
 # hacky solution for now...
