@@ -48,7 +48,7 @@ The purpose of the FMRISurface stage is primarily to take a volume time series a
 This stage involves four broad steps:
 
 1. Standard pre-processing
-1. Application of a respiratory motion filter
+1. Optional application of a respiratory motion filter
 1. Motion censoring followed by standard re-processing
 1. Construction of parcellated timeseries
 
@@ -62,11 +62,11 @@ Global signal regression (GSR) has been consistently shown to reduce the effects
 
 #### 2. DBP Respiratory Motion Filter
 
-In working with ABCD data, we have found that a respiratory artifact is produced within multi-band data (Fair et al., 2020).  While this artifact occurs outside the brain, it can affect estimates of frame alignment, leading to inappropriate motion censoring.  By filtering the frequencies (18.582 to 25.726 breaths per minute) of the respiratory signal from the motion realignment data, our respiratory motion filter produces better estimates of FD.
+In working with ABCD data, we have found that a respiratory artifact is produced within multi-band data (Fair et al., 2020).  While this artifact occurs outside the brain, it can affect estimates of frame alignment, leading to inappropriate motion censoring.  By filtering the frequencies (18.582 to 25.726 breaths per minute) of the respiratory signal from the motion realignment data, our respiratory motion filter produces better estimates of FD. Users may optionally specify upper and lower frequencies to perform respiratory motion filtering.
 
 #### 3. DBP Motion censoring
 
-Our motion censoring procedure is used for performing the standard pre-processing and for the final construction of parcellated timeseries.  For standard pre-processing, data are labeled as "bad" frames if they exceed an FD threshold of 0.3 mm.  Such "bad" frames are removed when demeaning and detrending, and betas for the denoising are calculated using only the "good" frames. For band-pass filtering, interpolation is used initially to replace the "bad" frames and the residuals are extracted from the denoising GLM.  In such a way, standard pre-processing of the timeseries only uses the "good" data but avoids potential aliasing due to missing timepoints.  After motion censoring, timepoints are further censored using an outlier detection approach. Both a mask including outlier detection and a mask without outlier detection are created. [These masks](https://collection3165.readthedocs.io/en/stable/derivatives/#7-motion-mat-file) are HDF5 compatible .MAT files, which contain temporal masks from 0 ("No censoring") to 0.5 mm FD thresholds in steps of 0.01 mm. 
+Our motion censoring procedure is used for performing the standard pre-processing and for the final construction of parcellated timeseries.  For standard pre-processing, data are labeled as "bad" frames if they exceed an FD threshold of 0.3 mm.  Such "bad" frames are removed when demeaning and detrending, and betas for the denoising are calculated using only the "good" frames. For band-pass filtering, interpolation is used initially to replace the "bad" frames and the residuals are extracted from the denoising GLM.  In such a way, standard pre-processing of the timeseries only uses the "good" data but avoids potential aliasing due to missing timepoints.  After motion censoring, timepoints are further censored using an outlier detection approach. Both a mask including outlier detection and a mask without outlier detection are created. These masks are HDF5 compatible .MAT files which contain temporal masks from 0 ("No censoring") to 0.5 mm FD thresholds in steps of 0.01 mm. 
 
 #### 4. DBP Generation of parcellated timeseries for specific atlases
 
