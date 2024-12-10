@@ -1,12 +1,16 @@
 # ABCD-HCP BIDS fMRI Pipeline
 
-The ABCD-BIDS pipeline is a [BIDS App](https://bids-apps.neuroimaging.io/about/) for processing [BIDS-formatted MRI datasets](https://bids-specification.readthedocs.io/en/stable/) using the [DCAN-HCP pipeline](https://github.com/DCAN-Labs/DCAN-HCP) and supporting modules including [DCAN BOLD Processing](https://github.com/DCAN-Labs/dcan_bold_processing) and [DCAN Executive Summary](https://github.com/DCAN-Labs/ExecutiveSummary). The pipeline utilizes methods from both the [Human Connectome Project's minimal preprocessing pipeline](https://doi.org/10.1016/j.neuroimage.2013.04.127) and the [DCAN Labs resting state fMRI analysis tools](https://github.com/DCAN-Labs/dcan_bold_processing) to output preprocessed MRI data in both volume and surface spaces.
+[![DOI](https://zenodo.org/badge/171551109.svg)](https://zenodo.org/badge/latestdoi/171551109)
+
+
+
+The ABCD-BIDS pipeline is a [BIDS App](https://bids-apps.neuroimaging.io/) for processing [BIDS-formatted MRI datasets](https://bids-specification.readthedocs.io/en/stable/) using the [DCAN-HCP pipeline](https://github.com/DCAN-Labs/DCAN-HCP) and supporting modules including [DCAN BOLD Processing](https://github.com/DCAN-Labs/dcan_bold_processing) and [DCAN Executive Summary](https://github.com/DCAN-Labs/ExecutiveSummary). The pipeline utilizes methods from both the [Human Connectome Project's minimal preprocessing pipeline](https://doi.org/10.1016/j.neuroimage.2013.04.127) and the [DCAN Labs resting state fMRI analysis tools](https://github.com/DCAN-Labs/dcan_bold_processing) to output preprocessed MRI data in both volume and surface spaces.
 
 Docker images are now available at the [DCAN Docker Hub repo](https://hub.docker.com/r/dcanumn/abcd-hcp-pipeline)
 
 Docker images for older versions (<= 0.0.4) are available at the [old repo](https://hub.docker.com/r/dcanlabs/abcd-hcp-pipeline)
 
-## Overview of Preprocessing Procedures
+## Pipeline Description
 Each stage of the larger pipeline has a distinct beginning and ending which is why we consider them stages.  The pipeline completes each step in serial, though some steps can utilize multiple processor cores to speed up processing time.  Below is a short explanation of each stage's intent and some of the methods.
 
 For full details see the following:
