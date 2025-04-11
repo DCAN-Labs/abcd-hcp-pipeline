@@ -54,7 +54,9 @@ def _cli():
         'collect': args.collect,
         'ncpus': args.ncpus,
         'stages': args.stages,
+        'no_gsr': args.no_gsr,
         'bandstop_params': args.bandstop,
+        'legacy_motion_filter': args.legacy_motion_filter,
         'check_only': args.check_outputs_only,
         'run_abcd_task': args.abcd_task,
         'study_template': args.study_template,
@@ -173,6 +175,11 @@ def generate_parser(parser=None):
              'FMRISurface, DCANBOLDProcessing, ExecutiveSummary, CustomClean'
     )
     parser.add_argument(
+        '--no-gsr', action='store_true', dest='no_gsr',
+        help='Disable global signal regression in DCANBOLDProcessing stage.'
+             'Default: False'
+    )
+    parser.add_argument(
         '--bandstop', type=float, nargs=2, metavar=('LOWER', 'UPPER'),
         help='Parameters for motion regressor band-stop filter. It is '
              'recommended for the boundaries to match the inter-quartile '
@@ -181,6 +188,13 @@ def generate_parser(parser=None):
              'parameters are highly recommended for data acquired with a '
              'frequency of greater than 1 Hz (TR less than 1 second). '
              'Default is no filter.'
+    )
+    parser.add_argument(
+        '--legacy-motion-filter', action='store_true', dest='legacy_motion_filter',
+        help='enable this to make band-stop motion filter behavior match that of '
+             'abcd-hcp-pipeline 0.1.x. Specifically, if using bidirectional '
+             'filter (filtfilt), the number of filter repetitions will be doubled '
+             'compared to running without this option. ' 
     )
     extras = parser.add_argument_group(
         'Special pipeline options',
@@ -237,7 +251,7 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
               run_abcd_task=False, study_template=None, cleaning_json=None,
               print_commands=False, ignore_expected_outputs=False,
               ignore_modalities=[], freesurfer_license=None, session_list=None,
-              dcmethod=None):
+              dcmethod=None, no_gsr=False, legacy_motion_filter=False):
     """
     main application interface
     :param bids_dir: input bids dataset see "helpers.read_bids_dataset" for
@@ -258,7 +272,9 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
     :param ignore_modalities: skip processing of specified modalities (func, dwi)
     :param freesurfer_license: FreeSurfer license file
     :param session_list: list of BIDS sessions, for filtering what input data to process
-    :param dcmethod: override default fmap distortion correction method  
+    :param dcmethod: override default fmap distortion correction method
+    :param no_gsr: disables global signal regression in DCANBOLDProcessing stage
+    :param legacy_motion_filter: enable for bandstop motion filter consistent with 0.1.x  
     :return:
     """
     if not check_only or not print_commands:
@@ -324,6 +340,10 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
         # set user parameters
         if bandstop_params is not None:
             boldproc.set_bandstop_filter(*bandstop_params)
+        if legacy_motion_filter:
+            boldproc.set_legacy_motion_filter(legacy_motion_filter)
+        if no_gsr:
+            boldproc.set_no_gsr(no_gsr)
 
         # add optional pipelines
         if run_abcd_task:
