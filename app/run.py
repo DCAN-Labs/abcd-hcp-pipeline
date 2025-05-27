@@ -247,11 +247,11 @@ def generate_parser(parser=None):
 
 
 def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
-              stages=None, bandstop_params=None, check_only=False,
-              run_abcd_task=False, study_template=None, cleaning_json=None,
+              stages=None, no_gsr=False, bandstop_params=None, legacy_motion_filter=False,
+              check_only=False, run_abcd_task=False, study_template=None, cleaning_json=None,
               print_commands=False, ignore_expected_outputs=False,
               ignore_modalities=[], freesurfer_license=None, session_list=None,
-              dcmethod=None, no_gsr=False, legacy_motion_filter=False):
+              dcmethod=None):
     """
     main application interface
     :param bids_dir: input bids dataset see "helpers.read_bids_dataset" for
@@ -263,7 +263,9 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
     :param collect: treats each subject as having only one session.
     :param ncpus: number of cores for parallelized processing.
     :param stages: only run a subset of stages.
+    :param no_gsr: disables global signal regression in DCANBOLDProcessing stage
     :param bandstop_params: tuple of lower and upper bound for stop-band filter
+    :param legacy_motion_filter: enable for bandstop motion filter consistent with 0.1.x  
     :param check_only: check expected outputs for each stage then terminate
     :param study_template: specified head and brain templates for intermediate registration
     :param cleaning_json: template JSON for use in optional CustomClean stage
@@ -273,8 +275,6 @@ def interface(bids_dir, output_dir, subject_list=None, collect=False, ncpus=1,
     :param freesurfer_license: FreeSurfer license file
     :param session_list: list of BIDS sessions, for filtering what input data to process
     :param dcmethod: override default fmap distortion correction method
-    :param no_gsr: disables global signal regression in DCANBOLDProcessing stage
-    :param legacy_motion_filter: enable for bandstop motion filter consistent with 0.1.x  
     :return:
     """
     if not check_only or not print_commands:
