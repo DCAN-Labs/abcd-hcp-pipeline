@@ -128,6 +128,11 @@ and applications are explained in detail at http://bids.neuroimaging.io/
     [6] Avants, BB et al. The Insight ToolKit image registration framework. Front
     Neuroinform. 2014 Apr 28;8:44. doi: 10.3389/fninf.2014.00044. eCollection 2014.
 
+## Notes: CPU and disk usage
+
+The pipeline may take over 24 hours if run on a single core. It is recommended to use at least 4 cores and allow for at least 12GB of memory total (so at least 3GB per core) to be safe. For sessions containing multiple runs, fMRI processing can be done in parallel, so using a number of cores which evenly divides your number of runs is optimal.
+
+Temporary/Scratch space: All intermediate processing is done in the designated output folder. Be sure this location has sufficient disk space and read/write performance for your processing jobs. 
 
 ## Example: minimal run command (Docker)
 
