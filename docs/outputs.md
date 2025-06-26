@@ -14,7 +14,7 @@ The raw outputs are organized in the following structure (not all folders are li
             │   |        └── executive_summary_sub-<SUBID>_ses-<SESID>.html
             │   ├── MNINonLinear/
             │   │   ├── Results/
-            │   │   ├── fsaverage_LR32K/
+            │   │   ├── fsaverage_LR32k/
             │   ├── T1w/
             │   │   └── <SUBID>/
             │   ├── [T2w/]
