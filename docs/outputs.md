@@ -48,7 +48,7 @@ The raw outputs are organized in the following structure (not all folders are li
 
 Pipeline outputs are mapped into BIDS-compliant derivatives via [File-mapper](https://github.com/DCAN-Labs/file-mapper) with the following directory structure. A detailed explanation of each file type is provided in the sections below - see anat/ and func/ sections. The `<SUBID>`, `<SESID>`, and `<TASK>` placeholders are replaced with the subject ID, session ID, and task name respectively (e.g. task-rest). The `<T1w|T2w>` placeholder is replaced with the type of anatomical image (T1-weighted or T2-weighted). The `<label>` placeholder is replaced with the run number.
 
-The `<ATLAS>` placeholder is replaced with the name of the atlas used for functional data for extraction of parcellated timeseries, including Evan Gordon’s 333 ROI AT (Gordon et al., 2014), HCP’s 360 ROI AT (Glasser et al., 2016), Jonathan Power’s 264 ROI AT (Power et al., 2011), and Thomas Yeo’s 118 ROI AT (Yeo et al., 2011). All parcellations additionally include 19 individualized subcortical parcellations.
+The `<ATLAS>` placeholder is replaced with the name of the atlas used for functional data for extraction of parcellated timeseries, including Evan Gordon’s 333 ROI AT (Gordon et al., 2014), HCP’s 360 ROI AT (Glasser et al., 2016), Jonathan Power’s 264 ROI AT (Power et al., 2011), and Thomas Yeo’s 118 ROI AT (Yeo et al., 2011). All parcellations additionally include a subcortical segmentation with ROIs taken from the standard HCP 91k-grayordinate CIFTI template. 
 
 * **Values for `<ATLAS>` include:**
     * Gordon2014FreeSurferSubcortical
