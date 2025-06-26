@@ -102,7 +102,7 @@ The derivative files included under the `anat/` directory include the following 
 | ----------------------------------------------------------------------- | ----------------------------------------------- |
 | `*_<T1w/T2w>_space-MNI_<brain/head>.nii.gz`                                            | T1w & T2w brain & head images in MNI space                                                    |
 | `*_T1w_space-MNI_desc-wmparc_dseg.nii.gz`                                              | White matter segmentation in MNI space                                                      |
-| `*_hemi-<L/R>_space-<MNI/T1w>_mesh-<fsLR32k/fsLR164k/native>_midthickness.surf.gii`    | L/R midthickness in MNI & native space each with 32k, 146k, * native mesh                                   |
+| `*_hemi-<L/R>_space-<MNI/T1w>_mesh-<fsLR32k/fsLR164k/native>_midthickness.surf.gii`    | L/R midthickness in MNI & native space each with 32k, 164k, * native mesh                                   |
 | `*_atlas-MNI_space-fsLR32k(_desc-smoothed)_myelinmap.dscalar.nii`                      | Smoothed & unsmoothed myelin map (only if T2w present)                                          |
 | `*_space-ACPC_dseg.nii.gz`                                                             | Discrete segmentation (native volume space)                                                              |
 | `*_space-fsLR32k_<curv/sulc/thickness>.dscalar.nii`                                    | Dense curvature, sulcal depth, & cortical thickness                                                     |
