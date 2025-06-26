@@ -115,7 +115,7 @@ The derivative files provided under `func/` including the following (`sub-<label
 
 |            **Filename**                                                                     |         **Description**                                                                                                                |
 | ----------------------------------------------------------------------- | ----------------------------------------------- |                                         
-| `*_task-<MID/nback/rest/SST>_bold_desc-filtered_timeseries.dtseries.nii`               | Concatenated functional task dense time series post-DANBOLDProc (regression and filtering) in Atlas space              |
+| `*_task-<MID/nback/rest/SST>_bold_desc-filtered_timeseries.dtseries.nii`               | Concatenated functional task dense time series post-DCANBOLDProc (regression and filtering) in HCP standard 91k CIFTI space           |
 | `*_task-<MID/nback/rest/SST>_bold_atlas-<ATLAS>_desc-filtered_timeseries.ptseries.nii` | Concatenated functional task parcellated time series                     |
 | `*_task-<MID/nback/rest/SST>_bold_desc-filtered(withoutliers)_motion_mask.mat`         | "5 contiguous frames" algorithm censoring file of temporal masks by FD threshold (0mm->0.5mm) with or without outliers |
 | `*_task-<MID/nback/rest/SST>_run-#_bold_timeseries.dtseries.nii`                       | Individual functional task run dense time series in Atlas space                                                        |
