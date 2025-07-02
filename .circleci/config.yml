@@ -23,12 +23,10 @@ jobs:
   build:
     <<: *dockersetup
     steps:
-
       - add_ssh_keys:
           fingerprints:
             - "SHA256:QO6SpK+Z6z477WpPFeRvUN0ID4AJ97g7SG/b6J3lors"
       - checkout
-
   test:
     <<: *dockersetup
     steps:
