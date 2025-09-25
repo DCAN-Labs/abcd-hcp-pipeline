@@ -968,7 +968,9 @@ class DCANBOLDProcessing(Stage):
         cmd += ' --teardown'
 
         for fmriset in fmrisets:
-            fmrilist = sorted([fmri for fmri in fmris if fmriset in fmri])
+            # add enclosing underscores to fmriset (the BIDS task entity) to prevent a match in the case bids_task is a 
+            # substring of another task present in the session, e.g. "task-rest" and "task-rest2"
+            fmrilist = sorted([fmri for fmri in fmris if "_" + fmriset + "_" in fmri])
             cmd += ' --tasklist ' + ','.join(fmrilist)
 
         log_dir = self._get_log_dir()
