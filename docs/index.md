@@ -46,6 +46,8 @@ A pair of spin echo EPI scans with opposite phase encoding directions are used t
 
 The purpose of the FMRISurface stage is primarily to take a volume time series and map it to the standard CIFTI grayordinates space.  This stage has not been altered from the original pipeline so refer to [Glasser, et al. 2013](https://doi.org/10.1016/j.neuroimage.2013.04.127) for more information.
 
+Note that the individual run dtseries included in the derivatives are the files output by the FMRISurface stage (smoothed with a 2mm FWHM kernel). They do not include processing performed in the next stage, DCANBOLDProcessing (i.e. prior to demean, detrend, nuisance regression, etc.). 
+
 ### Stage 6: DCANBOLDProcessing (DBP)
 
 [DCAN BOLD Processing](https://github.com/DCAN-Labs/dcan_bold_processing) is a signal processing software developed primarily by Dr. Oscar Miranda-Dominguez in the DCAN Labs with the primary function of nuisance regression from the dense time series and providing motion censoring information in accordance with [Power, et al. 2014](https://www.ncbi.nlm.nih.gov/pubmed/23994314).  The motion numbers produced in the FMRIVolume stage are also filtered to remove artifactual motion caused by respiration.  For more information on the respiration filtering see [Correction of respiratory artifacts in MRI head motion estimates. Fair, et al. NeuroImage. 2019.](https://doi.org/10.1016/j.neuroimage.2019.116400).
