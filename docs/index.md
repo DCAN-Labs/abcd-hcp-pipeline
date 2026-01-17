@@ -52,11 +52,12 @@ Note that the individual run dtseries included in the derivatives are the files 
 
 [DCAN BOLD Processing](https://github.com/DCAN-Labs/dcan_bold_processing) is a signal processing software developed primarily by Dr. Oscar Miranda-Dominguez in the DCAN Labs with the primary function of nuisance regression from the dense time series and providing motion censoring information in accordance with [Power, et al. 2014](https://www.ncbi.nlm.nih.gov/pubmed/23994314).  The motion numbers produced in the FMRIVolume stage are also filtered to remove artifactual motion caused by respiration.  For more information on the respiration filtering see [Correction of respiratory artifacts in MRI head motion estimates. Fair, et al. NeuroImage. 2019.](https://doi.org/10.1016/j.neuroimage.2019.116400).
 
-This stage involves four broad steps:
+This stage involves five broad steps:
 
 1. Standard pre-processing
 1. Optional application of a respiratory motion filter
 1. Motion censoring followed by standard re-processing
+1. Concatenation of timeseries across available BOLD runs
 1. Construction of parcellated timeseries
 
 #### 1. DBP Standard pre-processing
