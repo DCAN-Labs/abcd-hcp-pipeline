@@ -1,5 +1,10 @@
 site_name: ABCD-HCP BIDS fMRI Pipeline
 theme: readthedocs
+
+markdown_extensions:
+  - toc:
+      permalink: '🔗' 
+
 plugins:
   - search
 docs_dir: docs
